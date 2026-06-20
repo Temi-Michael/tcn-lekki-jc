@@ -3,7 +3,8 @@
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FileText, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, FileText, LogOut, Menu, X, Calendar, Users, Smile } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -29,9 +30,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-neutral-900 border-b border-neutral-800 z-40 relative">
         <h1 className="text-lg font-bold text-white tracking-tight">Smart Attendance</h1>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-neutral-300 hover:text-white p-1">
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-neutral-300 hover:text-white p-1">
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -42,17 +46,34 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
         
         <nav className="flex-1 px-4 space-y-2">
-          <Link href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === "/admin" ? "bg-blue-600 text-white" : "text-neutral-300 hover:text-white hover:bg-neutral-800"}`}>
-            <LayoutDashboard className="w-5 h-5" />
-            Dashboard
-          </Link>
-          <Link href="/admin/forms/new" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === "/admin/forms/new" ? "bg-blue-600 text-white" : "text-neutral-300 hover:text-white hover:bg-neutral-800"}`}>
-            <FileText className="w-5 h-5" />
-            Create Form
-          </Link>
+          {[
+            { href: "/admin", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, active: pathname === "/admin" },
+            { href: "/admin/forms/new", label: "Create Form", icon: <FileText className="w-5 h-5" />, active: pathname === "/admin/forms/new" },
+            { href: "/admin/children", label: "Children Roster", icon: <Smile className="w-5 h-5" />, active: pathname === "/admin/children" },
+            { href: "/admin/attendance", label: "Attendance", icon: <Calendar className="w-5 h-5" />, active: pathname.startsWith("/admin/attendance") },
+            { href: "/admin/teachers", label: "Mentors", icon: <Users className="w-5 h-5" />, active: pathname === "/admin/teachers" },
+          ].map(({ href, label, icon, active }) => (
+            <Link
+              key={href}
+              href={href}
+              style={active ? {} : { "--nav-hover-bg": "var(--bg-hover)" } as React.CSSProperties}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                active
+                  ? "bg-blue-600 text-white"
+                  : "nav-link-inactive"
+              }`}
+            >
+              {icon}
+              {label}
+            </Link>
+          ))}
         </nav>
         
-        <div className="p-4 border-t border-neutral-800">
+        <div className="p-4 border-t border-neutral-800 space-y-4">
+          <div className="flex justify-between items-center px-3">
+            <span className="text-xs text-neutral-400 font-semibold">Theme Mode</span>
+            <ThemeToggle />
+          </div>
           <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors">
             <LogOut className="w-5 h-5" />
             Sign Out
