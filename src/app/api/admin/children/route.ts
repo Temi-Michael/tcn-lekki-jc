@@ -46,6 +46,11 @@ export async function POST(request: Request) {
       parentName,
       parentPhone,
       parentEmail,
+      phone,
+      email,
+      schoolClass,
+      dayOrBoarding,
+      sundayService,
       customData,
       markPresentToday,
     } = body;
@@ -67,6 +72,11 @@ export async function POST(request: Request) {
       parentName: parentName || "",
       parentPhone: parentPhone || "",
       parentEmail: parentEmail || "",
+      phone: phone || "",
+      email: email || "",
+      schoolClass: schoolClass || "",
+      dayOrBoarding: dayOrBoarding || undefined,
+      sundayService: sundayService || undefined,
       customData: customData || {},
       status: "active",
     });

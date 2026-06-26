@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { firstName, lastName, phone, email } = body;
+    const { firstName, lastName, phone, email, dob, weddingAnniversary, address, profession, company, subunit } = body;
 
     if (!firstName || !lastName) {
       return NextResponse.json(
@@ -33,6 +33,12 @@ export async function POST(request: Request) {
       lastName,
       phone,
       email,
+      dob: dob ? new Date(dob) : undefined,
+      weddingAnniversary: weddingAnniversary ? new Date(weddingAnniversary) : undefined,
+      address,
+      profession,
+      company,
+      subunit,
     });
 
     return NextResponse.json(newTeacher, { status: 201 });

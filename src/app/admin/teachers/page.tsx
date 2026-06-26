@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search } from "lucide-react";
+import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search, Copy, RefreshCw } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAlert } from "@/components/AlertProvider";
 
 export default function TeachersAdminPage() {
+  const { showAlert } = useAlert();
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -14,6 +16,12 @@ export default function TeachersAdminPage() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
+  const [weddingAnniversary, setWeddingAnniversary] = useState("");
+  const [address, setAddress] = useState("");
+  const [profession, setProfession] = useState("");
+  const [company, setCompany] = useState("");
+  const [subunit, setSubunit] = useState("");
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -22,10 +30,24 @@ export default function TeachersAdminPage() {
   const [teacherHistory, setTeacherHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchTeachers();
+      showAlert("Mentors list refreshed!", { type: "success" });
+    } catch (e) {
+      console.error(e);
+      showAlert("Failed to refresh mentors list.", { type: "error" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const fetchTeachers = async () => {
     try {
@@ -63,6 +85,12 @@ export default function TeachersAdminPage() {
           lastName: lastName.trim(),
           phone: phone.trim(),
           email: email.trim(),
+          dob: dob || undefined,
+          weddingAnniversary: weddingAnniversary || undefined,
+          address: address.trim(),
+          profession: profession.trim(),
+          company: company.trim(),
+          subunit,
         }),
       });
 
@@ -74,6 +102,12 @@ export default function TeachersAdminPage() {
         setLastName("");
         setPhone("");
         setEmail("");
+        setDob("");
+        setWeddingAnniversary("");
+        setAddress("");
+        setProfession("");
+        setCompany("");
+        setSubunit("");
         setSuccessMsg(`Successfully registered Teacher ${data.firstName} ${data.lastName}!`);
         setTimeout(() => setSuccessMsg(""), 4000);
       } else {
@@ -161,12 +195,28 @@ export default function TeachersAdminPage() {
     }
   };
 
+  const copyPublicLink = () => {
+    const link = `${window.location.origin}/register/mentor`;
+    navigator.clipboard.writeText(link);
+    showAlert("Public registration link copied to clipboard!", { type: "success" });
+  };
+
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full">
       <div className="flex items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Mentors Directory</h1>
-          <p className="text-sm text-neutral-400 mt-1">Manage Sunday School mentors and track their attendance history</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Mentors Directory</h1>
+            <p className="text-sm text-neutral-400 mt-1">Manage Sunday School mentors and track their attendance history</p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refresh mentors directory"
+            className="p-2.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-400 hover:text-white border border-neutral-800 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 self-center"
+          >
+            <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin text-blue-500" : ""}`} />
+          </button>
         </div>
         <ThemeToggle />
       </div>
@@ -174,9 +224,18 @@ export default function TeachersAdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Side: Register Mentor Form */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 self-start">
-          <div className="flex items-center gap-2 mb-6">
-            <UserPlus className="w-5 h-5 text-blue-500" />
-            <h2 className="text-xl font-bold text-white">Register Mentor</h2>
+          <div className="flex items-center justify-between gap-2 mb-6 pb-4 border-b border-neutral-800/60">
+            <div className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-blue-500" />
+              <h2 className="text-xl font-bold text-white">Register Mentor</h2>
+            </div>
+            <button
+              onClick={copyPublicLink}
+              type="button"
+              className="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <Copy className="w-3 h-3" /> Copy Link
+            </button>
           </div>
 
           <form onSubmit={handleAddTeacher} className="space-y-4">
@@ -219,6 +278,7 @@ export default function TeachersAdminPage() {
               <label className="block text-sm font-medium text-neutral-400 mb-1.5">Phone Number</label>
               <input
                 type="text"
+                required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white rounded-xl px-4 py-2.5 outline-none transition-all placeholder:text-neutral-600"
@@ -235,6 +295,98 @@ export default function TeachersAdminPage() {
                 className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white rounded-xl px-4 py-2.5 outline-none transition-all placeholder:text-neutral-600"
                 placeholder="e.g. name@tcnlekki.org"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Date of Birth</label>
+              <input
+                type="date"
+                required
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white rounded-xl px-4 py-2.5 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Wedding Anniversary</label>
+              <input
+                type="date"
+                value={weddingAnniversary}
+                onChange={(e) => setWeddingAnniversary(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white rounded-xl px-4 py-2.5 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Residential Address</label>
+              <textarea
+                required
+                rows={2}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white rounded-xl px-4 py-2.5 outline-none transition-all placeholder:text-neutral-655"
+                placeholder="e.g. 12 Admiralty Way, Lekki Phase 1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Profession / Occupation</label>
+              <input
+                type="text"
+                required
+                value={profession}
+                onChange={(e) => setProfession(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white rounded-xl px-4 py-2.5 outline-none transition-all placeholder:text-neutral-600"
+                placeholder="e.g. Software Engineer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Company Name</label>
+              <input
+                type="text"
+                required
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white rounded-xl px-4 py-2.5 outline-none transition-all placeholder:text-neutral-600"
+                placeholder="e.g. Google"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Sub-unit in Jesus Tribe</label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                {[
+                  "Ministration",
+                  "Finance",
+                  "Admin / Operations",
+                  "Publicity",
+                  "Bible Study",
+                  "Prayer",
+                  "Welfare",
+                  "Editorial",
+                ].map((dept) => (
+                  <label
+                    key={dept}
+                    className={`flex items-center gap-2 text-xs text-neutral-300 cursor-pointer p-2.5 rounded-xl border transition-all ${
+                      subunit === dept
+                        ? "bg-blue-600/10 border-blue-500 text-blue-400"
+                        : "bg-neutral-950 border-neutral-800 hover:bg-neutral-850"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="subunit"
+                      required
+                      checked={subunit === dept}
+                      onChange={() => setSubunit(dept)}
+                      className="text-blue-600 focus:ring-blue-500 shrink-0"
+                    />
+                    <span className="truncate">{dept}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <button
@@ -350,10 +502,30 @@ export default function TeachersAdminPage() {
                 </div>
 
                 {/* Contact details */}
-                <div className="bg-neutral-950 p-4 border border-neutral-800/80 rounded-xl space-y-2 text-sm text-neutral-300">
-                  <h4 className="font-bold text-white uppercase text-xs tracking-wider text-blue-400">Mentor Contact Information</h4>
-                  {selectedTeacher.phone && <div><span className="text-neutral-500">Phone:</span> {selectedTeacher.phone}</div>}
-                  {selectedTeacher.email && <div><span className="text-neutral-500">Email:</span> {selectedTeacher.email}</div>}
+                <div className="bg-neutral-950 p-5 border border-neutral-800/80 rounded-xl space-y-4 text-sm text-neutral-300">
+                  <div>
+                    <h4 className="font-bold text-white uppercase text-xs tracking-wider text-blue-400 mb-2.5">Mentor Profile Details</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                      <div><span className="text-neutral-500 font-medium">Phone:</span> {selectedTeacher.phone || "—"}</div>
+                      <div><span className="text-neutral-500 font-medium">Email:</span> {selectedTeacher.email || "—"}</div>
+                      <div><span className="text-neutral-500 font-medium">Date of Birth:</span> {selectedTeacher.dob ? new Date(selectedTeacher.dob).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : "—"}</div>
+                      <div><span className="text-neutral-500 font-medium">Anniversary:</span> {selectedTeacher.weddingAnniversary ? new Date(selectedTeacher.weddingAnniversary).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : "—"}</div>
+                      <div><span className="text-neutral-500 font-medium">Occupation:</span> {selectedTeacher.profession || "—"}</div>
+                      <div><span className="text-neutral-500 font-medium">Company:</span> {selectedTeacher.company || "—"}</div>
+                      <div className="sm:col-span-2 mt-1">
+                        <span className="text-neutral-500 font-medium mr-1.5">Sub-unit:</span> 
+                        <span className="bg-blue-500/10 text-blue-400 px-2.5 py-0.5 rounded-lg text-xs border border-blue-500/20 font-semibold inline-block">
+                          {selectedTeacher.subunit || "None"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-neutral-800/60 pt-3">
+                    <span className="text-neutral-500 font-medium block mb-1">Residential Address:</span>
+                    <p className="text-white bg-neutral-900/60 p-2.5 rounded-xl border border-neutral-800 text-xs leading-relaxed">
+                      {selectedTeacher.address || "—"}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Search input in modal */}

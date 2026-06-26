@@ -3,6 +3,11 @@ import dbConnect from "@/lib/db";
 import Submission from "@/models/Submission";
 import Form from "@/models/Form";
 
+function escapeRegExp(val: string) {
+  if (!val) return "";
+  return val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function POST(request: Request) {
   try {
     await dbConnect();
@@ -13,12 +18,15 @@ export async function POST(request: Request) {
     if (!form) return NextResponse.json({ error: "Form not found" }, { status: 404 });
     if (form.status === "disabled") return NextResponse.json({ error: "Form is no longer active" }, { status: 403 });
 
+    const safeFirstName = escapeRegExp(firstName || "");
+    const safeLastName = escapeRegExp(lastName || "");
+
     // Server-side duplicate check
     let isDuplicateSuspected = false;
     const exactMatch = await Submission.findOne({
       formId,
-      firstName: { $regex: new RegExp(`^${firstName}$`, 'i') },
-      lastName: { $regex: new RegExp(`^${lastName}$`, 'i') },
+      firstName: { $regex: new RegExp(`^${safeFirstName}$`, 'i') },
+      lastName: { $regex: new RegExp(`^${safeLastName}$`, 'i') },
       age
     });
 
@@ -27,8 +35,8 @@ export async function POST(request: Request) {
     } else {
       const fullNameMatch = await Submission.findOne({
         formId,
-        firstName: { $regex: new RegExp(`^${firstName}$`, 'i') },
-        lastName: { $regex: new RegExp(`^${lastName}$`, 'i') }
+        firstName: { $regex: new RegExp(`^${safeFirstName}$`, 'i') },
+        lastName: { $regex: new RegExp(`^${safeLastName}$`, 'i') }
       });
       if (fullNameMatch) {
         isDuplicateSuspected = true;

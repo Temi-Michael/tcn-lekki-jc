@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { Search, CheckCircle2, Loader2, Check, X, ShieldAlert } from "lucide-react";
+import { Search, CheckCircle2, Loader2, Check, X, ShieldAlert, Copy, ExternalLink } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import Link from "next/link";
+import { useAlert } from "@/components/AlertProvider";
 
 export default function TeacherCheckinKiosk({ params }: { params: Promise<{ sessionId: string }> }) {
+  const { showAlert } = useAlert();
   const unwrappedParams = use(params);
   const { sessionId } = unwrappedParams;
 
@@ -46,7 +49,7 @@ export default function TeacherCheckinKiosk({ params }: { params: Promise<{ sess
   const handleCheckInSubmit = async () => {
     if (!session || !confirmItem) return;
     if (session.status !== "active") {
-      alert("This session is not active. Attendance check-ins are not permitted.");
+      showAlert("This session is not active. Attendance check-ins are not permitted.", { type: "warning" });
       return;
     }
 
@@ -81,12 +84,12 @@ export default function TeacherCheckinKiosk({ params }: { params: Promise<{ sess
         }, 1200);
       } else {
         const errorData = await res.json();
-        alert(errorData.error || "Check-in failed. Please call an administrator for assistance.");
+        showAlert(errorData.error || "Check-in failed. Please call an administrator for assistance.", { type: "error" });
         setIsCheckingIn(false);
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred. Please try again.");
+      showAlert("An error occurred. Please try again.", { type: "error" });
       setIsCheckingIn(false);
     }
   };
@@ -171,6 +174,33 @@ export default function TeacherCheckinKiosk({ params }: { params: Promise<{ sess
           )}
         </div>
 
+        {/* Registration Callout Banner */}
+        <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3 shadow-lg shadow-indigo-500/5">
+          <div className="text-xs sm:text-sm text-slate-300">
+            <strong className="text-white font-bold">New Mentor?</strong> Sign up in 1 minute to check in.
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Link
+              href="/register/mentor"
+              target="_blank"
+              className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Register
+            </Link>
+            <button
+              onClick={() => {
+                const link = `${window.location.origin}/register/mentor`;
+                navigator.clipboard.writeText(link);
+                showAlert("Mentor registration link copied to clipboard!", { type: "success" });
+              }}
+              type="button"
+              className="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-350 border border-slate-750 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <Copy className="w-3.5 h-3.5" /> Copy Link
+            </button>
+          </div>
+        </div>
+
         {/* Scannable Grid Table */}
         <div className="bg-slate-900/60 border border-slate-850 rounded-2xl shadow-xl overflow-hidden flex-1 flex flex-col min-h-0">
           <div className="px-6 py-4 bg-slate-900/90 border-b border-slate-850">
@@ -188,8 +218,26 @@ export default function TeacherCheckinKiosk({ params }: { params: Promise<{ sess
               <tbody className="divide-y divide-slate-850/50">
                 {filteredTeachers.length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="text-center py-12 text-slate-500">
-                      {searchQuery ? "No matching mentors found." : "Start typing to find your name."}
+                    <td colSpan={2} className="text-center py-16 text-slate-400 px-6">
+                      {searchQuery ? (
+                        <div className="space-y-4 max-w-sm mx-auto">
+                          <p className="font-semibold text-white">No matching mentors found for "{searchQuery}".</p>
+                          <p className="text-xs text-slate-400">
+                            If you haven't registered yet, click the button below to sign up on your device.
+                          </p>
+                          <div className="flex justify-center gap-2">
+                            <Link
+                              href="/register/mentor"
+                              target="_blank"
+                              className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" /> Register Now
+                            </Link>
+                          </div>
+                        </div>
+                      ) : (
+                        "Start typing to find your name."
+                      )}
                     </td>
                   </tr>
                 ) : (

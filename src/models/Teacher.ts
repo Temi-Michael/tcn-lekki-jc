@@ -6,6 +6,12 @@ const TeacherSchema = new mongoose.Schema(
     lastName: { type: String, required: true },
     phone: { type: String },
     email: { type: String },
+    dob: { type: Date },
+    weddingAnniversary: { type: Date },
+    address: { type: String },
+    profession: { type: String },
+    company: { type: String },
+    subunit: { type: String },
     status: {
       type: String,
       enum: ["active", "inactive"],

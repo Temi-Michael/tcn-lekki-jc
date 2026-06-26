@@ -10,6 +10,11 @@ const ChildSchema = new mongoose.Schema(
     parentName: { type: String },
     parentPhone: { type: String },
     parentEmail: { type: String },
+    phone: { type: String },
+    email: { type: String },
+    schoolClass: { type: String },
+    dayOrBoarding: { type: String, enum: ["Day", "Boarding"] },
+    sundayService: { type: String, enum: ["1st Service", "2nd Service", "Either"] },
     customData: {
       type: Map,
       of: mongoose.Schema.Types.Mixed,

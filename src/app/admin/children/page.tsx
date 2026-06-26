@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, Phone, Mail, Loader2, Calendar, Smile, Search, Award, X } from "lucide-react";
+import { Plus, UserPlus, Phone, Mail, Loader2, Calendar, Smile, Search, Award, X, RefreshCw } from "lucide-react";
+import { useAlert } from "@/components/AlertProvider";
 
 export default function ChildrenAdminPage() {
+  const { showAlert } = useAlert();
   const [children, setChildren] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -18,6 +20,11 @@ export default function ChildrenAdminPage() {
   const [parentName, setParentName] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [parentEmail, setParentEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [schoolClass, setSchoolClass] = useState("");
+  const [dayOrBoarding, setDayOrBoarding] = useState("Day");
+  const [sundayService, setSundayService] = useState("Either");
   const [markPresentToday, setMarkPresentToday] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -27,6 +34,21 @@ export default function ChildrenAdminPage() {
   const [childHistory, setChildHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Auto-calculate age from DOB
+  useEffect(() => {
+    if (dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      setAge(calculatedAge >= 0 ? calculatedAge : "");
+    }
+  }, [dob]);
 
   useEffect(() => {
     fetchChildren();
@@ -48,10 +70,23 @@ export default function ChildrenAdminPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchChildren();
+      showAlert("Children directory refreshed!", { type: "success" });
+    } catch (e) {
+      console.error(e);
+      showAlert("Failed to refresh children directory.", { type: "error" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleRegisterChild = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || age === "") {
-      setError("First Name, Last Name, and Age are required.");
+    if (!firstName.trim() || !lastName.trim() || age === "" || !schoolClass.trim() || !dayOrBoarding || !sundayService) {
+      setError("First Name, Last Name, Age, Class/Grade, Day/Boarding status, and Sunday Service selection are required.");
       return;
     }
 
@@ -72,6 +107,11 @@ export default function ChildrenAdminPage() {
           parentName: parentName.trim(),
           parentPhone: parentPhone.trim(),
           parentEmail: parentEmail.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          schoolClass: schoolClass.trim(),
+          dayOrBoarding,
+          sundayService,
           markPresentToday,
         }),
       });
@@ -88,6 +128,11 @@ export default function ChildrenAdminPage() {
         setParentName("");
         setParentPhone("");
         setParentEmail("");
+        setPhone("");
+        setEmail("");
+        setSchoolClass("");
+        setDayOrBoarding("Day");
+        setSundayService("Either");
         setMarkPresentToday(false);
         setSuccessMsg(
           `Successfully registered ${data.child.firstName} ${data.child.lastName}! ${
@@ -150,9 +195,21 @@ export default function ChildrenAdminPage() {
 
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full space-y-8">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Children Directory</h1>
-        <p className="text-sm text-neutral-400 mt-1">Register children and check their attendance records</p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Children Directory</h1>
+            <p className="text-sm text-neutral-400 mt-1">Register children and check their attendance records</p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refresh children directory"
+            className="p-2.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-400 hover:text-white border border-neutral-800 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 self-center"
+          >
+            <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin text-blue-500" : ""}`} />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -234,6 +291,110 @@ export default function ChildrenAdminPage() {
                 onChange={(e) => setDob(e.target.value)}
                 className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2 text-sm outline-none transition-all text-neutral-300"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">School Class / Grade *</label>
+              <input
+                type="text"
+                required
+                value={schoolClass}
+                onChange={(e) => setSchoolClass(e.target.value)}
+                className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm outline-none transition-all placeholder:text-neutral-600"
+                placeholder="e.g. Grade 6"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Day / Boarding *</label>
+                <div className="flex gap-4 mt-2">
+                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                    <input
+                      type="radio"
+                      name="dayOrBoarding"
+                      value="Day"
+                      checked={dayOrBoarding === "Day"}
+                      onChange={(e) => setDayOrBoarding(e.target.value)}
+                      className="text-blue-600 bg-neutral-950 border-neutral-800 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                    />
+                    Day
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                    <input
+                      type="radio"
+                      name="dayOrBoarding"
+                      value="Boarding"
+                      checked={dayOrBoarding === "Boarding"}
+                      onChange={(e) => setDayOrBoarding(e.target.value)}
+                      className="text-blue-600 bg-neutral-950 border-neutral-800 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                    />
+                    Boarding
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Sunday Service *</label>
+                <div className="flex flex-col gap-2 mt-1.5">
+                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                    <input
+                      type="radio"
+                      name="sundayService"
+                      value="1st Service"
+                      checked={sundayService === "1st Service"}
+                      onChange={(e) => setSundayService(e.target.value)}
+                      className="text-blue-600 bg-neutral-950 border-neutral-800 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                    />
+                    1st Service
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                    <input
+                      type="radio"
+                      name="sundayService"
+                      value="2nd Service"
+                      checked={sundayService === "2nd Service"}
+                      onChange={(e) => setSundayService(e.target.value)}
+                      className="text-blue-600 bg-neutral-950 border-neutral-800 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                    />
+                    2nd Service
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer">
+                    <input
+                      type="radio"
+                      name="sundayService"
+                      value="Either"
+                      checked={sundayService === "Either"}
+                      onChange={(e) => setSundayService(e.target.value)}
+                      className="text-blue-600 bg-neutral-950 border-neutral-800 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                    />
+                    Either
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Child's Phone</label>
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm outline-none transition-all placeholder:text-neutral-600"
+                  placeholder="e.g. +234..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Child's Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm outline-none transition-all placeholder:text-neutral-600"
+                  placeholder="e.g. child@example.com"
+                />
+              </div>
             </div>
 
             <div>
@@ -415,11 +576,17 @@ export default function ChildrenAdminPage() {
                     <h4 className="font-bold text-white uppercase text-[10px] tracking-wider text-blue-400">Child Details</h4>
                     {selectedChild.dob && <div><span className="text-neutral-500">Date of Birth:</span> {new Date(selectedChild.dob).toLocaleDateString()}</div>}
                     <div><span className="text-neutral-500">Age / Gender:</span> {selectedChild.age} yrs / {selectedChild.gender}</div>
+                    {selectedChild.schoolClass && <div><span className="text-neutral-500">Class/Grade:</span> {selectedChild.schoolClass}</div>}
+                    {selectedChild.dayOrBoarding && <div><span className="text-neutral-500">Day/Boarding:</span> {selectedChild.dayOrBoarding} Student</div>}
+                    {selectedChild.sundayService && <div><span className="text-neutral-500">Sunday Service:</span> {selectedChild.sundayService}</div>}
+                    {selectedChild.phone && <div><span className="text-neutral-500">Child's Phone:</span> {selectedChild.phone}</div>}
+                    {selectedChild.email && <div><span className="text-neutral-500">Child's Email:</span> {selectedChild.email}</div>}
                   </div>
                   <div className="space-y-1">
                     <h4 className="font-bold text-white uppercase text-[10px] tracking-wider text-blue-400">Parent Info</h4>
                     <div><span className="text-neutral-500">Name:</span> {selectedChild.parentName || "N/A"}</div>
                     {selectedChild.parentPhone && <div><span className="text-neutral-500">Phone:</span> {selectedChild.parentPhone}</div>}
+                    {selectedChild.parentEmail && <div><span className="text-neutral-500">Email:</span> {selectedChild.parentEmail}</div>}
                   </div>
                 </div>
 

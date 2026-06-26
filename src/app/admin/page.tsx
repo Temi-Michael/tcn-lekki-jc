@@ -2,19 +2,35 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Settings, Trash2, Eye, FileText, AlertTriangle, Edit } from "lucide-react";
+import { Plus, Settings, Trash2, Eye, FileText, AlertTriangle, Edit, Copy, RefreshCw } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAlert } from "@/components/AlertProvider";
 
 export default function AdminDashboard() {
+  const { showAlert } = useAlert();
   const [forms, setForms] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchForms();
     fetchStats();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([fetchForms(), fetchStats()]);
+      showAlert("Dashboard data refreshed!", { type: "success" });
+    } catch (error) {
+      console.error("Failed to refresh dashboard data", error);
+      showAlert("Failed to refresh dashboard data.", { type: "error" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -51,9 +67,19 @@ export default function AdminDashboard() {
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Dashboard</h1>
-          <p className="text-sm sm:text-base text-neutral-400 mt-1">Manage your events and attendance forms</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Dashboard</h1>
+            <p className="text-sm sm:text-base text-neutral-400 mt-1">Manage your events and attendance forms</p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refresh dashboard stats and events"
+            className="p-2.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-400 hover:text-white border border-neutral-800 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 self-center"
+          >
+            <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin text-blue-500" : ""}`} />
+          </button>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <ThemeToggle />
@@ -113,9 +139,20 @@ export default function AdminDashboard() {
                 </span>
               </div>
               
-              <div className="text-sm text-neutral-400 mb-6 font-mono bg-neutral-950 p-2 rounded-lg border border-neutral-800">
-                /{form.slug}
-              </div>
+              <button
+                onClick={() => {
+                  const link = `${window.location.origin}/${form.slug}`;
+                  navigator.clipboard.writeText(link);
+                  showAlert("Copied event registration link to clipboard!", { type: "success" });
+                }}
+                className="w-full text-left text-sm text-neutral-400 mb-6 font-mono bg-neutral-950 hover:bg-neutral-850 p-2.5 rounded-lg border border-neutral-800 flex justify-between items-center group cursor-pointer transition-colors outline-none"
+                title="Click to copy registration link"
+              >
+                <span>/{form.slug}</span>
+                <span className="text-[10px] text-neutral-500 font-sans group-hover:text-blue-400 font-semibold transition-colors flex items-center gap-1.5 shrink-0">
+                  <Copy className="w-3.5 h-3.5" /> Copy Link
+                </span>
+              </button>
 
               <div className="flex items-center justify-between border-t border-neutral-800 pt-4">
                 <Link

@@ -34,29 +34,65 @@ export default function Home() {
             Register your kids and teens for our upcoming events, summer camps, and Sunday school programs. 
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 max-w-5xl mx-auto">
-            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-3xl shadow-xl shadow-indigo-100/50 border border-white hover:-translate-y-1 transition-transform">
-              <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                <Heart className="w-7 h-7 text-rose-600" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12 max-w-5xl mx-auto">
+            {/* Card 1 */}
+            <div className="bg-card-bg/60 backdrop-blur-xl rounded-3xl shadow-xl border border-card-border/50 overflow-hidden hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
+              <div className="relative h-48 w-full overflow-hidden border-b border-card-border/40">
+                <img 
+                  src="/images/safe_loving.png" 
+                  alt="Safe & Loving Sunday School"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
+                <div className="absolute top-4 right-4 w-10 h-10 bg-card-bg/90 border border-card-border/80 rounded-xl flex items-center justify-center shadow-md">
+                  <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-indigo-950 mb-3">Safe & Loving</h3>
-              <p className="text-slate-600">A nurturing environment where every child is cherished and protected.</p>
+              <div className="p-6 flex-1 flex flex-col justify-between text-left">
+                <div>
+                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Safe & Loving</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">A nurturing environment where every child is cherished, guided, and protected.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-3xl shadow-xl shadow-indigo-100/50 border border-white hover:-translate-y-1 transition-transform">
-              <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                <Star className="w-7 h-7 text-amber-600" />
+            {/* Card 2 */}
+            <div className="bg-card-bg/60 backdrop-blur-xl rounded-3xl shadow-xl border border-card-border/50 overflow-hidden hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
+              <div className="relative h-48 w-full overflow-hidden border-b border-card-border/40">
+                <img 
+                  src="/images/fun_activities.png" 
+                  alt="Fun Activities"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
+                <div className="absolute top-4 right-4 w-10 h-10 bg-card-bg/90 border border-card-border/80 rounded-xl flex items-center justify-center shadow-md">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-indigo-950 mb-3">Fun Activities</h3>
-              <p className="text-slate-600">Engaging lessons and joyful games designed specifically for their age group.</p>
+              <div className="p-6 flex-1 flex flex-col justify-between text-left">
+                <div>
+                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Fun Activities</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">Engaging lessons, crafts, and games designed specifically to make faith enjoyable.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-3xl shadow-xl shadow-indigo-100/50 border border-white hover:-translate-y-1 transition-transform">
-              <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                <Users className="w-7 h-7 text-blue-600" />
+            {/* Card 3 */}
+            <div className="bg-card-bg/60 backdrop-blur-xl rounded-3xl shadow-xl border border-card-border/50 overflow-hidden hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
+              <div className="relative h-48 w-full overflow-hidden border-b border-card-border/40">
+                <img 
+                  src="/images/community.png" 
+                  alt="Community"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
+                <div className="absolute top-4 right-4 w-10 h-10 bg-card-bg/90 border border-card-border/80 rounded-xl flex items-center justify-center shadow-md">
+                  <Users className="w-5 h-5 text-indigo-500" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-indigo-950 mb-3">Community</h3>
-              <p className="text-slate-600">Building lifelong friendships rooted in spiritual growth and kindness.</p>
+              <div className="p-6 flex-1 flex flex-col justify-between text-left">
+                <div>
+                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Community</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">Building lifelong friendships and a supportive network for spiritual growth.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

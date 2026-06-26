@@ -3,8 +3,10 @@
 import { useEffect, useState, use } from "react";
 import { AlertCircle, CheckCircle2, Heart, Lock } from "lucide-react";
 import { notFound } from "next/navigation";
+import { useAlert } from "@/components/AlertProvider";
 
 export default function PublicForm({ params }: { params: Promise<{ formSlug: string }> }) {
+  const { showAlert } = useAlert();
   // We use React's use() to unwrap the promise in Next 15
   const unwrappedParams = use(params);
   const { formSlug } = unwrappedParams;
@@ -88,7 +90,7 @@ export default function PublicForm({ params }: { params: Promise<{ formSlug: str
       if (!res.ok) throw new Error("Submission failed");
       setSuccess(true);
     } catch (err: any) {
-      alert(err.message);
+      showAlert(err.message, { type: "error" });
     }
   };
 

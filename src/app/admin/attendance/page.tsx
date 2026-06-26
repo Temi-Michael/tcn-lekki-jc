@@ -16,10 +16,14 @@ import {
   AlertTriangle,
   FolderDown,
   Info,
-  Search
+  Search,
+  RefreshCw
 } from "lucide-react";
 
+import { useAlert } from "@/components/AlertProvider";
+
 export default function AttendanceAdminPage() {
+  const { showAlert } = useAlert();
   const [sessions, setSessions] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +55,7 @@ export default function AttendanceAdminPage() {
 
   // Session Search State
   const [sessionSearchQuery, setSessionSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const filteredSessions = sessions.filter((session) => {
     const query = sessionSearchQuery.toLowerCase().trim();
@@ -103,6 +108,32 @@ export default function AttendanceAdminPage() {
       console.error("Failed to load session roster", error);
     } finally {
       setLoadingRoster(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (!selectedSession) return;
+    setRefreshing(true);
+    try {
+      const [rosterRes, statsRes] = await Promise.all([
+        fetch(`/api/admin/attendance/roster?sessionId=${selectedSession._id}`),
+        fetch("/api/admin/attendance/stats"),
+      ]);
+
+      if (rosterRes.ok) {
+        const rosterData = await rosterRes.json();
+        setSessionRoster(rosterData);
+      }
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData);
+      }
+      showAlert("Attendance data refreshed!", { type: "success" });
+    } catch (error) {
+      console.error("Failed to refresh attendance data", error);
+      showAlert("Failed to refresh attendance data.", { type: "error" });
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -162,7 +193,7 @@ export default function AttendanceAdminPage() {
     if (!selectedSession) return;
 
     if (selectedSession.status !== "active") {
-      alert("This session is not active. Attendance check is only allowed for active sessions.");
+      showAlert("This session is inactive. Attendance modifications are not permitted.", { type: "warning" });
       return;
     }
 
@@ -257,11 +288,11 @@ export default function AttendanceAdminPage() {
         setSessions(sessions.map(s => s._id === data._id ? data : s));
         setEditingNotes(false);
       } else {
-        alert(data.error || "Failed to save notes");
+        showAlert(data.error || "Failed to save notes", { type: "error" });
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving notes");
+      showAlert("Error saving notes. Please try again.", { type: "error" });
     } finally {
       setSavingNotes(false);
     }
@@ -280,9 +311,21 @@ export default function AttendanceAdminPage() {
     <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full space-y-8">
       {/* Top Title & Kiosk Launcher */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Attendance Manager</h1>
-          <p className="text-sm text-neutral-400 mt-1">Manage check-in sessions, mentors, and review reports</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Attendance Manager</h1>
+            <p className="text-sm text-neutral-400 mt-1">Manage check-in sessions, mentors, and review reports</p>
+          </div>
+          {selectedSession && (
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Refresh attendance records"
+              className="p-2.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-400 hover:text-white border border-neutral-800 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 self-center"
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin text-blue-500" : ""}`} />
+            </button>
+          )}
         </div>
 
         {selectedSession && selectedSession.status === "active" && (
@@ -294,7 +337,7 @@ export default function AttendanceAdminPage() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(window.location.origin + "/attendance/child/" + (selectedSession.slug || selectedSession._id));
-                    alert("Kids check-in link copied to clipboard!");
+                    showAlert("Kids check-in link copied to clipboard!", { type: "success" });
                   }}
                   className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-neutral-850 hover:bg-neutral-855 text-white font-semibold rounded-xl border border-neutral-700 transition-all text-xs cursor-pointer"
                 >
@@ -317,7 +360,7 @@ export default function AttendanceAdminPage() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(window.location.origin + "/attendance/teacher/" + (selectedSession.slug || selectedSession._id));
-                    alert("Mentors check-in link copied to clipboard!");
+                    showAlert("Mentors check-in link copied to clipboard!", { type: "success" });
                   }}
                   className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-neutral-855 hover:bg-neutral-800 text-white font-semibold rounded-xl border border-neutral-700 transition-all text-xs cursor-pointer"
                 >

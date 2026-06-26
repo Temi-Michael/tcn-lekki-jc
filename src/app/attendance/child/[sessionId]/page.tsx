@@ -3,8 +3,10 @@
 import { useEffect, useState, use } from "react";
 import { Search, CheckCircle2, Loader2, Check, X, ShieldAlert } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAlert } from "@/components/AlertProvider";
 
 export default function ChildCheckinKiosk({ params }: { params: Promise<{ sessionId: string }> }) {
+  const { showAlert } = useAlert();
   const unwrappedParams = use(params);
   const { sessionId } = unwrappedParams;
 
@@ -46,7 +48,7 @@ export default function ChildCheckinKiosk({ params }: { params: Promise<{ sessio
   const handleCheckInSubmit = async () => {
     if (!session || !confirmItem) return;
     if (session.status !== "active") {
-      alert("This session is not active. Attendance check-ins are not permitted.");
+      showAlert("This session is not active. Attendance check-ins are not permitted.", { type: "warning" });
       return;
     }
 
@@ -81,12 +83,12 @@ export default function ChildCheckinKiosk({ params }: { params: Promise<{ sessio
         }, 1200);
       } else {
         const errorData = await res.json();
-        alert(errorData.error || "Check-in failed. Please call a mentor for assistance.");
+        showAlert(errorData.error || "Check-in failed. Please call a mentor for assistance.", { type: "error" });
         setIsCheckingIn(false);
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred. Please try again.");
+      showAlert("An error occurred. Please try again.", { type: "error" });
       setIsCheckingIn(false);
     }
   };

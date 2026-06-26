@@ -2,15 +2,23 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Submission from "@/models/Submission";
 
+function escapeRegExp(val: string) {
+  if (!val) return "";
+  return val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function POST(request: Request) {
   try {
     await dbConnect();
     const { formId, firstName, lastName, age } = await request.json();
 
+    const safeFirstName = escapeRegExp(firstName || "");
+    const safeLastName = escapeRegExp(lastName || "");
+
     // Check level 1: First name matches
     const firstNameMatch = await Submission.findOne({ 
       formId, 
-      firstName: { $regex: new RegExp(`^${firstName}$`, 'i') } 
+      firstName: { $regex: new RegExp(`^${safeFirstName}$`, 'i') } 
     });
 
     if (!firstNameMatch) return NextResponse.json({ level: 0 });
@@ -20,8 +28,8 @@ export async function POST(request: Request) {
     // Check level 2: First + Last name matches
     const fullNameMatch = await Submission.findOne({
       formId,
-      firstName: { $regex: new RegExp(`^${firstName}$`, 'i') },
-      lastName: { $regex: new RegExp(`^${lastName}$`, 'i') }
+      firstName: { $regex: new RegExp(`^${safeFirstName}$`, 'i') },
+      lastName: { $regex: new RegExp(`^${safeLastName}$`, 'i') }
     });
 
     if (!fullNameMatch) return NextResponse.json({ level: 1 });
@@ -31,8 +39,8 @@ export async function POST(request: Request) {
     // Check level 3: Full match
     const exactMatch = await Submission.findOne({
       formId,
-      firstName: { $regex: new RegExp(`^${firstName}$`, 'i') },
-      lastName: { $regex: new RegExp(`^${lastName}$`, 'i') },
+      firstName: { $regex: new RegExp(`^${safeFirstName}$`, 'i') },
+      lastName: { $regex: new RegExp(`^${safeLastName}$`, 'i') },
       age
     });
 
