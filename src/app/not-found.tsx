@@ -16,7 +16,7 @@ export default function NotFound() {
         <h2 className="text-2xl font-bold text-slate-800 mb-4">Page Not Found</h2>
         
         <p className="text-slate-500 leading-relaxed mb-10 text-lg">
-          Oops! The page or form you are looking for doesn't exist, or it might have been moved. 
+          Oops! The page or form you are looking for doesn&apos;t exist, or it might have been moved.
         </p>
         
         <Link 

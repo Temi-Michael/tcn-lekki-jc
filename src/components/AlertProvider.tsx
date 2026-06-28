@@ -39,11 +39,13 @@ const animationStyles = `
 }
 `;
 
+let nextToastId = 1;
+
 export function AlertProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showAlert = (msg: string, options?: AlertOptions) => {
-    const id = Math.random().toString(36).substring(2, 9);
+    const id = String(nextToastId++);
     
     // Capitalize type if title is omitted
     const defaultTitle = options?.type 

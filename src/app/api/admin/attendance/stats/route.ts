@@ -77,7 +77,7 @@ export async function GET() {
 
         if (missedSession1 && missedSession2) {
           // Count total consecutive absences (can look back further if needed)
-          let consecutiveAbsences = 2;
+          const consecutiveAbsences = 2;
           // Check session 3
           if (recentSessions.length >= 3 && childIdStr) {
             // We can do a quick check later or just list them as "Absent >= 2 weeks"

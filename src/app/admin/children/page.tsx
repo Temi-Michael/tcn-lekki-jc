@@ -85,8 +85,8 @@ export default function ChildrenAdminPage() {
 
   const handleRegisterChild = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || age === "" || !schoolClass.trim() || !dayOrBoarding || !sundayService) {
-      setError("First Name, Last Name, Age, Class/Grade, Day/Boarding status, and Sunday Service selection are required.");
+    if (!firstName.trim() || !lastName.trim() || age === "" || !schoolClass.trim() || !dayOrBoarding || !sundayService || !parentName.trim() || !parentPhone.trim()) {
+      setError("First Name, Last Name, Age, Class/Grade, Day/Boarding status, Sunday Service selection, Parent's Name, and Parent's Phone are required.");
       return;
     }
 
@@ -376,7 +376,7 @@ export default function ChildrenAdminPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Child's Phone</label>
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Child's Phone (Optional)</label>
                 <input
                   type="text"
                   value={phone}
@@ -386,7 +386,7 @@ export default function ChildrenAdminPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Child's Email</label>
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Child's Email (Optional)</label>
                 <input
                   type="email"
                   value={email}
@@ -398,9 +398,10 @@ export default function ChildrenAdminPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Parent's Name</label>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Parent's Name *</label>
               <input
                 type="text"
+                required
                 value={parentName}
                 onChange={(e) => setParentName(e.target.value)}
                 className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm outline-none transition-all placeholder:text-neutral-600"
@@ -409,9 +410,10 @@ export default function ChildrenAdminPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Parent's Phone Number</label>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Parent's Phone Number *</label>
               <input
                 type="text"
+                required
                 value={parentPhone}
                 onChange={(e) => setParentPhone(e.target.value)}
                 className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2.5 text-sm outline-none transition-all placeholder:text-neutral-600"

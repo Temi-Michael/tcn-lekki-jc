@@ -8,6 +8,7 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const isLightStored = localStorage.getItem("theme") === "light";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLight(isLightStored);
     if (isLightStored) {
       document.documentElement.classList.add("light");

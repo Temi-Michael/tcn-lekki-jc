@@ -84,7 +84,7 @@ export default function MentorRegistrationPage() {
           </div>
 
           <div className="w-full bg-slate-950 border border-slate-850 p-4 rounded-2xl text-left text-xs text-slate-400 leading-relaxed">
-            <p className="font-semibold text-white mb-1 uppercase tracking-wider text-[10px]">What's Next?</p>
+            <p className="font-semibold text-white mb-1 uppercase tracking-wider text-[10px]">What&apos;s Next?</p>
             <ul className="list-disc pl-4 space-y-1">
               <li>Every Sunday, search for your name on the Mentors Kiosk to check in.</li>
               <li>Your sub-unit is set as <strong className="text-indigo-400">{subunit}</strong>.</li>

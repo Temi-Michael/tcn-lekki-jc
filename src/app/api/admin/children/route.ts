@@ -55,9 +55,9 @@ export async function POST(request: Request) {
       markPresentToday,
     } = body;
 
-    if (!firstName || !lastName || !age || !gender) {
+    if (!firstName || !lastName || !age || !gender || !parentName || !parentPhone) {
       return NextResponse.json(
-        { error: "First Name, Last Name, Age, and Gender are required" },
+        { error: "First Name, Last Name, Age, Gender, Parent's Name, and Parent's Phone are required" },
         { status: 400 }
       );
     }
