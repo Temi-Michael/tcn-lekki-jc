@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search, Copy, RefreshCw } from "lucide-react";
+import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search, Copy, RefreshCw, Download, FileText } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useAlert } from "@/components/AlertProvider";
 
@@ -201,6 +201,51 @@ export default function TeachersAdminPage() {
     showAlert("Public registration link copied to clipboard!", { type: "success" });
   };
 
+  const exportCSV = () => {
+    window.open("/api/admin/attendance/teachers/export", "_blank");
+  };
+
+  const exportPDF = () => {
+    const rows = teachers
+      .map(
+        (t, i) => `
+        <tr style="background:${i % 2 === 0 ? "#f9fafb" : "#fff"}">
+          <td>${t.firstName} ${t.lastName}</td>
+          <td>${t.phone || "—"}</td>
+          <td>${t.email || "—"}</td>
+          <td>${t.profession || "—"}</td>
+          <td>${t.company || "—"}</td>
+          <td>${t.subunit || "—"}</td>
+          <td>${t.address || "—"}</td>
+        </tr>`
+      )
+      .join("");
+
+    const html = `<!DOCTYPE html><html><head><title>Mentors Directory</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:24px;color:#111}
+        h1{font-size:20px;margin-bottom:4px}
+        p{font-size:12px;color:#555;margin:0 0 16px}
+        table{width:100%;border-collapse:collapse;font-size:11px}
+        th{background:#1e40af;color:#fff;padding:8px 10px;text-align:left}
+        td{padding:7px 10px;border-bottom:1px solid #e5e7eb}
+        @media print{body{padding:0}}
+      </style></head><body>
+      <h1>TCN Lekki — Mentors Directory</h1>
+      <p>Exported: ${new Date().toLocaleDateString()} &nbsp;|&nbsp; Total: ${teachers.length}</p>
+      <table><thead><tr>
+        <th>Name</th><th>Phone</th><th>Email</th><th>Profession</th><th>Company</th><th>Subunit</th><th>Address</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      </body></html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 300);
+  };
+
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full">
       <div className="flex items-center justify-between gap-4 mb-8">
@@ -218,7 +263,25 @@ export default function TeachersAdminPage() {
             <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin text-blue-500" : ""}`} />
           </button>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportCSV}
+            disabled={teachers.length === 0}
+            title="Export as CSV"
+            className="flex items-center gap-1.5 px-3 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-neutral-300 hover:text-white border border-neutral-800 rounded-xl text-xs font-medium transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" /> CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            disabled={teachers.length === 0}
+            title="Export as PDF"
+            className="flex items-center gap-1.5 px-3 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-neutral-300 hover:text-white border border-neutral-800 rounded-xl text-xs font-medium transition-all cursor-pointer"
+          >
+            <FileText className="w-4 h-4" /> PDF
+          </button>
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, Phone, Mail, Loader2, Calendar, Smile, Search, Award, X, RefreshCw } from "lucide-react";
+import { Plus, UserPlus, Phone, Mail, Loader2, Calendar, Smile, Search, Award, X, RefreshCw, Download, FileText } from "lucide-react";
 import { useAlert } from "@/components/AlertProvider";
 
 export default function ChildrenAdminPage() {
@@ -81,6 +81,51 @@ export default function ChildrenAdminPage() {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const exportCSV = () => {
+    window.open("/api/admin/children/export", "_blank");
+  };
+
+  const exportPDF = () => {
+    const rows = filteredChildren
+      .map(
+        (c, i) => `
+        <tr style="background:${i % 2 === 0 ? "#f9fafb" : "#fff"}">
+          <td>${c.firstName} ${c.lastName}</td>
+          <td>${c.age} / ${c.gender}</td>
+          <td>${c.schoolClass || "—"}</td>
+          <td>${c.dayOrBoarding || "—"}</td>
+          <td>${c.sundayService || "—"}</td>
+          <td>${c.parentName || "—"}</td>
+          <td>${c.parentPhone || "—"}</td>
+        </tr>`
+      )
+      .join("");
+
+    const html = `<!DOCTYPE html><html><head><title>Children Directory</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:24px;color:#111}
+        h1{font-size:20px;margin-bottom:4px}
+        p{font-size:12px;color:#555;margin:0 0 16px}
+        table{width:100%;border-collapse:collapse;font-size:11px}
+        th{background:#1e40af;color:#fff;padding:8px 10px;text-align:left}
+        td{padding:7px 10px;border-bottom:1px solid #e5e7eb}
+        @media print{body{padding:0}}
+      </style></head><body>
+      <h1>TCN Lekki — Children Directory</h1>
+      <p>Exported: ${new Date().toLocaleDateString()} &nbsp;|&nbsp; Total: ${filteredChildren.length}</p>
+      <table><thead><tr>
+        <th>Name</th><th>Age / Gender</th><th>Class</th><th>Day/Boarding</th><th>Sunday Service</th><th>Parent</th><th>Parent Phone</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      </body></html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 300);
   };
 
   const handleRegisterChild = async (e: React.FormEvent) => {
@@ -208,6 +253,24 @@ export default function ChildrenAdminPage() {
             className="p-2.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-400 hover:text-white border border-neutral-800 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 self-center"
           >
             <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin text-blue-500" : ""}`} />
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportCSV}
+            disabled={children.length === 0}
+            title="Export as CSV"
+            className="flex items-center gap-1.5 px-3 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-neutral-300 hover:text-white border border-neutral-800 rounded-xl text-xs font-medium transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" /> CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            disabled={children.length === 0}
+            title="Export as PDF"
+            className="flex items-center gap-1.5 px-3 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-neutral-300 hover:text-white border border-neutral-800 rounded-xl text-xs font-medium transition-all cursor-pointer"
+          >
+            <FileText className="w-4 h-4" /> PDF
           </button>
         </div>
       </div>
