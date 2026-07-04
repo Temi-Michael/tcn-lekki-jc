@@ -673,8 +673,11 @@ export default function AttendanceAdminPage() {
                 <div className="space-y-6">
                   {/* Mentors Attendance */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-blue-500" /> Mentors Check-in Roster ({sessionRoster.teachers.length})
+                    <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
+                      <Users className="w-4 h-4 text-blue-500" /> Mentors Check-in Roster
+                      <span className="ml-1 normal-case px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+                        {sessionRoster.teachers.filter((t) => t.isPresent).length} / {sessionRoster.teachers.length} checked in
+                      </span>
                     </h3>
 
                     {sessionRoster.teachers.length === 0 ? (
@@ -719,8 +722,11 @@ export default function AttendanceAdminPage() {
 
                   {/* Children Attendance Table */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
                       <Users className="w-4 h-4 text-blue-500" /> Children Check-in Board Roster
+                      <span className="ml-1 normal-case px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+                        {sessionRoster.children.filter((c) => c.isPresent).length} / {sessionRoster.children.length} present
+                      </span>
                     </h3>
 
                     {sessionRoster.children.length === 0 ? (

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search, Copy, RefreshCw, Download, FileText } from "lucide-react";
-import ThemeToggle from "@/components/ThemeToggle";
 import { useAlert } from "@/components/AlertProvider";
 
 export default function TeachersAdminPage() {
@@ -280,7 +279,6 @@ export default function TeachersAdminPage() {
           >
             <FileText className="w-4 h-4" /> PDF
           </button>
-          <ThemeToggle />
         </div>
       </div>
 
@@ -473,7 +471,7 @@ export default function TeachersAdminPage() {
         {/* Right Side: Mentors List & History */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Registered Mentors</h2>
+            <h2 className="text-xl font-bold text-white mb-6">Registered Mentors ({teachers.length})</h2>
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12 text-neutral-500 gap-2">

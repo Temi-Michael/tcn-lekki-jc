@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Settings, Trash2, Eye, FileText, AlertTriangle, Edit, Copy, RefreshCw } from "lucide-react";
-import ThemeToggle from "@/components/ThemeToggle";
 import { useAlert } from "@/components/AlertProvider";
 
 export default function AdminDashboard() {
@@ -82,7 +81,6 @@ export default function AdminDashboard() {
           </button>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <ThemeToggle />
           <Link
             href="/admin/forms/new"
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-500/20 w-full sm:w-auto"

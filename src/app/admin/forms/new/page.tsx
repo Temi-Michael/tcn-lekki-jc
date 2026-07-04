@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Settings, Type, Calendar, Phone, ToggleLeft, AlignLeft, Hash, List, GripVertical } from "lucide-react";
-import ThemeToggle from "@/components/ThemeToggle";
 
 type FieldType = "text" | "textarea" | "number" | "date" | "boolean" | "email" | "select";
 
@@ -122,7 +121,6 @@ export default function CreateForm() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Create New Form</h1>
           <p className="text-neutral-400 mt-2">Design your form. First Name, Last Name, and Age are automatically included.</p>
         </div>
-        <ThemeToggle />
       </div>
 
       {error && (
