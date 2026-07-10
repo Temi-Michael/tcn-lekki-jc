@@ -45,6 +45,7 @@ export async function GET() {
       },
     });
   } catch (error: any) {
-    return new Response(error.message || "Failed to export children directory", { status: 500 });
+    console.error("API error:", error);
+    return new Response("Failed to export children directory", { status: 500 });
   }
 }

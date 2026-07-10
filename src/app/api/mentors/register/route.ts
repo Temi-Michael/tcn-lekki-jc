@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Teacher from "@/models/Teacher";
-
-function escapeRegExp(val: string) {
-  if (!val) return "";
-  return val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+import { isDuplicateMentor, DUPLICATE_MENTOR_MESSAGE } from "@/lib/mentorDuplicate";
 
 export async function POST(request: Request) {
   try {
@@ -32,25 +28,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const safeFirstName = escapeRegExp(firstName.trim());
-    const safeLastName = escapeRegExp(lastName.trim());
-
-    // Check duplicate name or phone (case-insensitive for names)
-    const existingMentor = await Teacher.findOne({
-      $or: [
-        {
-          firstName: { $regex: new RegExp(`^${safeFirstName}$`, "i") },
-          lastName: { $regex: new RegExp(`^${safeLastName}$`, "i") },
-        },
-        { phone: phone.trim() },
-      ],
-    });
-
-    if (existingMentor) {
-      return NextResponse.json(
-        { error: "A mentor with this name or phone number is already registered" },
-        { status: 409 }
-      );
+    if (await isDuplicateMentor(firstName, lastName, phone)) {
+      return NextResponse.json({ error: DUPLICATE_MENTOR_MESSAGE }, { status: 409 });
     }
 
     const newMentor = await Teacher.create({
@@ -69,8 +48,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newMentor, { status: 201 });
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to register mentor" },
+      { error: "Failed to register mentor" },
       { status: 500 }
     );
   }

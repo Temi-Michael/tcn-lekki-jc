@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Teacher from "@/models/Teacher";
+import { isDuplicateMentor, DUPLICATE_MENTOR_MESSAGE } from "@/lib/mentorDuplicate";
 
 export async function GET() {
   try {
@@ -8,8 +9,9 @@ export async function GET() {
     const teachers = await Teacher.find({}).sort({ firstName: 1, lastName: 1 });
     return NextResponse.json(teachers);
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch teachers" },
+      { error: "Failed to fetch teachers" },
       { status: 500 }
     );
   }
@@ -28,6 +30,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (await isDuplicateMentor(firstName, lastName, phone)) {
+      return NextResponse.json({ error: DUPLICATE_MENTOR_MESSAGE }, { status: 409 });
+    }
+
     const newTeacher = await Teacher.create({
       firstName,
       lastName,
@@ -43,8 +49,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newTeacher, { status: 201 });
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create teacher" },
+      { error: "Failed to create teacher" },
       { status: 500 }
     );
   }

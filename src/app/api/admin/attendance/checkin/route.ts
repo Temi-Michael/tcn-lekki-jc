@@ -57,8 +57,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, status: "present", record });
     }
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to process check-in" },
+      { error: "Failed to process check-in" },
       { status: 500 }
     );
   }

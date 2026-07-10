@@ -106,8 +106,9 @@ export async function GET() {
       followUpList,
     });
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to compile attendance statistics" },
+      { error: "Failed to compile attendance statistics" },
       { status: 500 }
     );
   }

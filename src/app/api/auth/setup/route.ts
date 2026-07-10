@@ -1,17 +1,36 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import dbConnect from "@/lib/db";
 import Admin from "@/models/Admin";
-import { hashPassword } from "@/lib/auth";
+import { hashPassword, verifySession } from "@/lib/auth";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await dbConnect();
 
-    // Allow up to 2 admins so that if one forgets a password, the other can be created, 
-    // or an admin can be manually deleted from the DB to re-enable setup.
     const adminCount = await Admin.countDocuments();
+
+    // Bootstrap: the very first admin can be created without a session.
+    // Once any admin exists, only a logged-in admin may create another.
+    if (adminCount > 0) {
+      const token = request.cookies.get("admin_session")?.value;
+      const session = token ? await verifySession(token) : null;
+      if (!session) {
+        return NextResponse.json(
+          { error: "Unauthorized", code: "AUTH_REQUIRED" },
+          { status: 401 }
+        );
+      }
+    }
+
+    // Cap of 2 admins. Details stay in the server logs; the response says
+    // nothing about how the cap works or how to re-enable setup.
     if (adminCount >= 2) {
-      return NextResponse.json({ error: "Maximum number of admins (2) reached. Delete an admin from the database to create a new one." }, { status: 403 });
+      console.warn("Setup attempt rejected: admin cap (2) already reached.");
+      return NextResponse.json(
+        { error: "Setup is not available", code: "SETUP_CLOSED" },
+        { status: 403 }
+      );
     }
 
     const { username, password } = await request.json();

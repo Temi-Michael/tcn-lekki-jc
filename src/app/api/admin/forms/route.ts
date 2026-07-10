@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     if (error.code === 11000) {
       return NextResponse.json({ error: "A form with this link already exists" }, { status: 400 });
     }
-    return NextResponse.json({ error: error.message || "Failed to create form" }, { status: 500 });
+    console.error("API error:", error);
+    return NextResponse.json({ error: "Failed to create form" }, { status: 500 });
   }
 }

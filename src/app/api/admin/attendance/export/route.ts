@@ -85,6 +85,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: any) {
-    return new Response(error.message || "Failed to export attendance report", { status: 500 });
+    console.error("API error:", error);
+    return new Response("Failed to export attendance report", { status: 500 });
   }
 }

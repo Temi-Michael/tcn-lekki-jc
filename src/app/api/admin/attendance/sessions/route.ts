@@ -49,8 +49,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(sessions);
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch sessions" },
+      { error: "Failed to fetch sessions" },
       { status: 500 }
     );
   }
@@ -105,8 +106,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(populatedSession, { status: 201 });
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create session" },
+      { error: "Failed to create session" },
       { status: 500 }
     );
   }
@@ -154,8 +156,9 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(updatedSession);
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to update session" },
+      { error: "Failed to update session" },
       { status: 500 }
     );
   }

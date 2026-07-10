@@ -1,9 +1,12 @@
 import { jwtVerify, SignJWT } from "jose";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "fallback_super_secret_key_change_me"
-);
+if (!process.env.JWT_SECRET) {
+  // Fail closed: a missing secret must never silently fall back to a
+  // publicly known string, or every admin session becomes forgeable.
+  throw new Error("JWT_SECRET environment variable is not set. Set it before starting the app.");
+}
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function hashPassword(password: string) {
   return await bcrypt.hash(password, 10);

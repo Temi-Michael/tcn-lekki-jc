@@ -81,8 +81,9 @@ export async function GET(request: Request) {
       teachers: teachersWithStatus,
     });
   } catch (error: any) {
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch roster with attendance status" },
+      { error: "Failed to fetch roster with attendance status" },
       { status: 500 }
     );
   }

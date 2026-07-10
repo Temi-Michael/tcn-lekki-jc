@@ -15,7 +15,7 @@ export default function ChildrenAdminPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [age, setAge] = useState<number | "">("");
-  const [gender, setGender] = useState("Male");
+  const [gender, setGender] = useState("");
   const [dob, setDob] = useState("");
   const [parentName, setParentName] = useState("");
   const [parentPhone, setParentPhone] = useState("");
@@ -130,8 +130,8 @@ export default function ChildrenAdminPage() {
 
   const handleRegisterChild = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || age === "" || !schoolClass.trim() || !dayOrBoarding || !sundayService || !parentName.trim() || !parentPhone.trim()) {
-      setError("First Name, Last Name, Age, Class/Grade, Day/Boarding status, Sunday Service selection, Parent's Name, and Parent's Phone are required.");
+    if (!firstName.trim() || !lastName.trim() || age === "" || !gender || !dob || !schoolClass.trim() || !dayOrBoarding || !sundayService || !parentName.trim() || !parentPhone.trim()) {
+      setError("First Name, Last Name, Age, Gender, Date of Birth, Class/Grade, Day/Boarding status, Sunday Service selection, Parent's Name, and Parent's Phone are required.");
       return;
     }
 
@@ -168,7 +168,7 @@ export default function ChildrenAdminPage() {
         setFirstName("");
         setLastName("");
         setAge("");
-        setGender("Male");
+        setGender("");
         setDob("");
         setParentName("");
         setParentPhone("");
@@ -334,12 +334,14 @@ export default function ChildrenAdminPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Gender</label>
+                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Gender *</label>
                 <select
+                  required
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
                   className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2 text-sm outline-none transition-all"
                 >
+                  <option value="">Select gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
@@ -347,9 +349,10 @@ export default function ChildrenAdminPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Date of Birth</label>
+              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Date of Birth *</label>
               <input
                 type="date"
+                required
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
                 className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white rounded-xl px-3 py-2 text-sm outline-none transition-all text-neutral-300"
