@@ -1,84 +1,75 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import dbConnect from "@/lib/db";
 import mongoose from "mongoose";
 import Child from "@/models/Child";
 import Teacher from "@/models/Teacher";
 import AttendanceSession from "@/models/AttendanceSession";
 import AttendanceRecord from "@/models/AttendanceRecord";
+import { verifySession } from "@/lib/auth";
+
+function shapeRecord(record: any) {
+  return record
+    ? { _id: record._id, checkInTime: record.checkInTime, checkedInBy: record.checkedInBy }
+    : null;
+}
+
+// The public check-in kiosks are unauthenticated, so they receive ONLY the
+// fields the board renders. Parent PII (phone, name, email, address, dob) is
+// never sent to a client without a valid admin session. Authenticated admins
+// get the full record.
+function shapeChild(doc: any, record: any, isAdmin: boolean) {
+  const c = doc.toObject();
+  const base = isAdmin
+    ? c
+    : { _id: c._id, firstName: c.firstName, lastName: c.lastName, age: c.age, gender: c.gender };
+  return { ...base, isPresent: record ? record.status === "present" : false, record: shapeRecord(record) };
+}
+
+function shapeTeacher(doc: any, record: any, isAdmin: boolean) {
+  const t = doc.toObject();
+  const base = isAdmin
+    ? t
+    : { _id: t._id, firstName: t.firstName, lastName: t.lastName };
+  return { ...base, isPresent: record ? record.status === "present" : false, record: shapeRecord(record) };
+}
 
 export async function GET(request: Request) {
   try {
     await dbConnect();
-    const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get("sessionId");
 
-    // Fetch active children and active teachers
+    const token = (await cookies()).get("admin_session")?.value;
+    const isAdmin = token ? !!(await verifySession(token)) : false;
+
+    const sessionId = new URL(request.url).searchParams.get("sessionId");
+
     const children = await Child.find({ status: "active" }).sort({ firstName: 1, lastName: 1 });
     const teachers = await Teacher.find({ status: "active" }).sort({ firstName: 1, lastName: 1 });
 
-    if (!sessionId) {
-      return NextResponse.json({
-        children: children.map(c => ({ ...c.toObject(), isPresent: false })),
-        teachers: teachers.map(t => ({ ...t.toObject(), isPresent: false })),
-      });
+    // Resolve the session by id or slug. If it is missing or not found, everyone
+    // is simply reported absent (no attendance records to map).
+    let sessionObj = null;
+    if (sessionId) {
+      const byId = mongoose.Types.ObjectId.isValid(sessionId);
+      sessionObj = await AttendanceSession.findOne(byId ? { _id: sessionId } : { slug: sessionId });
     }
 
-    // Resolve session by ID or slug
-    const isObjectId = mongoose.Types.ObjectId.isValid(sessionId);
-    const query = isObjectId ? { _id: sessionId } : { slug: sessionId };
-    const sessionObj = await AttendanceSession.findOne(query);
-
-    if (!sessionObj) {
-      return NextResponse.json({
-        children: children.map(c => ({ ...c.toObject(), isPresent: false })),
-        teachers: teachers.map(t => ({ ...t.toObject(), isPresent: false })),
+    const childRecords = new Map();
+    const teacherRecords = new Map();
+    if (sessionObj) {
+      const records = await AttendanceRecord.find({ sessionId: sessionObj._id });
+      records.forEach((rec) => {
+        if (rec.recordType === "child" && rec.childId) {
+          childRecords.set(rec.childId.toString(), rec);
+        } else if (rec.recordType === "teacher" && rec.teacherId) {
+          teacherRecords.set(rec.teacherId.toString(), rec);
+        }
       });
     }
-
-    // Fetch attendance records for the resolved session's ObjectId
-    const records = await AttendanceRecord.find({ sessionId: sessionObj._id });
-
-    // Map records by childId and teacherId for fast lookup
-    const childRecordsMap = new Map();
-    const teacherRecordsMap = new Map();
-
-    records.forEach((rec) => {
-      if (rec.recordType === "child" && rec.childId) {
-        childRecordsMap.set(rec.childId.toString(), rec);
-      } else if (rec.recordType === "teacher" && rec.teacherId) {
-        teacherRecordsMap.set(rec.teacherId.toString(), rec);
-      }
-    });
-
-    const childrenWithStatus = children.map((c) => {
-      const record = childRecordsMap.get(c._id.toString());
-      return {
-        ...c.toObject(),
-        isPresent: record ? record.status === "present" : false,
-        record: record ? {
-          _id: record._id,
-          checkInTime: record.checkInTime,
-          checkedInBy: record.checkedInBy,
-        } : null,
-      };
-    });
-
-    const teachersWithStatus = teachers.map((t) => {
-      const record = teacherRecordsMap.get(t._id.toString());
-      return {
-        ...t.toObject(),
-        isPresent: record ? record.status === "present" : false,
-        record: record ? {
-          _id: record._id,
-          checkInTime: record.checkInTime,
-          checkedInBy: record.checkedInBy,
-        } : null,
-      };
-    });
 
     return NextResponse.json({
-      children: childrenWithStatus,
-      teachers: teachersWithStatus,
+      children: children.map((c) => shapeChild(c, childRecords.get(c._id.toString()), isAdmin)),
+      teachers: teachers.map((t) => shapeTeacher(t, teacherRecords.get(t._id.toString()), isAdmin)),
     });
   } catch (error: any) {
     console.error("API error:", error);

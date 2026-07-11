@@ -4,7 +4,7 @@ import Child from "@/models/Child";
 import AttendanceSession from "@/models/AttendanceSession";
 import AttendanceRecord from "@/models/AttendanceRecord";
 import { sendChildRegistrationEmail } from "@/lib/mail";
-import { isSameDay, nameRegex, normalizePhone } from "@/lib/matching";
+import { escapeRegExp, isSameDay, nameRegex, normalizePhone } from "@/lib/matching";
 
 const DUPLICATE_CHILD_MESSAGE =
   "This child is already registered. Please check the Registered Children list before adding.";
@@ -13,7 +13,11 @@ export async function GET(request: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get("query") || "";
+    // Escape user input so regex metacharacters ("(", "[", "\", ...) are
+    // matched literally instead of crashing the query or enabling ReDoS.
+    // The length cap bounds the pattern size; 100 chars is far beyond any
+    // real name or phone search.
+    const query = escapeRegExp((searchParams.get("query") || "").trim().slice(0, 100));
 
     let filter: any = {};
     if (query) {

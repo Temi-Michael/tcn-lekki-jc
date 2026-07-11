@@ -94,14 +94,12 @@ export default function TeacherCheckinKiosk({ params }: { params: Promise<{ sess
     }
   };
 
-  // Filter mentors list based on query
+  // Filter mentors list based on query. Kiosks are public, so they only
+  // receive names (no phone) — search is by name.
   const filteredTeachers = roster.filter((teacher) => {
     const fullName = `${teacher.firstName} ${teacher.lastName}`.toLowerCase();
     const query = searchQuery.toLowerCase().trim();
-    return (
-      fullName.includes(query) ||
-      (teacher.phone && teacher.phone.includes(query))
-    );
+    return fullName.includes(query);
   });
 
   if (loading) {

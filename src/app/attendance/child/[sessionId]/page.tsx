@@ -93,14 +93,12 @@ export default function ChildCheckinKiosk({ params }: { params: Promise<{ sessio
     }
   };
 
-  // Filter children list based on query
+  // Filter children list based on query. Kiosks are public, so they only
+  // receive names (no parent phone) — search is by name.
   const filteredChildren = roster.filter((child) => {
     const fullName = `${child.firstName} ${child.lastName}`.toLowerCase();
     const query = searchQuery.toLowerCase().trim();
-    return (
-      fullName.includes(query) ||
-      (child.parentPhone && child.parentPhone.includes(query))
-    );
+    return fullName.includes(query);
   });
 
   if (loading) {
