@@ -3,7 +3,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FileText, LogOut, Menu, X, Calendar, Users, Smile } from "lucide-react";
+import { LayoutDashboard, FileText, LogOut, Menu, X, Calendar, Users, Smile, BarChart3 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -51,6 +51,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             { href: "/admin/forms/new", label: "Create Form", icon: <FileText className="w-5 h-5" />, active: pathname === "/admin/forms/new" },
             { href: "/admin/children", label: "Children Roster", icon: <Smile className="w-5 h-5" />, active: pathname === "/admin/children" },
             { href: "/admin/attendance", label: "Attendance", icon: <Calendar className="w-5 h-5" />, active: pathname.startsWith("/admin/attendance") },
+            { href: "/admin/reports", label: "Sunday Reports", icon: <BarChart3 className="w-5 h-5" />, active: pathname === "/admin/reports" },
             { href: "/admin/teachers", label: "Mentors", icon: <Users className="w-5 h-5" />, active: pathname === "/admin/teachers" },
           ].map(({ href, label, icon, active }) => (
             <Link

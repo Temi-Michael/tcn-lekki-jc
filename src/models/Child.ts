@@ -25,6 +25,9 @@ const ChildSchema = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "active",
     },
+    // Set when an admin marks an absent child as followed-up. Used to hide them
+    // from the active follow-up list until they miss another Sunday.
+    lastContactedAt: { type: Date },
   },
   { timestamps: true }
 );

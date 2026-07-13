@@ -70,6 +70,23 @@ export async function POST(request: Request) {
       );
     }
 
+    // One service per day: block a second session of the same service type on the
+    // same date so the two-services-per-Sunday rollup stays unambiguous.
+    const dayStart = new Date(date);
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setUTCHours(23, 59, 59, 999);
+    const duplicate = await AttendanceSession.findOne({
+      serviceType,
+      date: { $gte: dayStart, $lte: dayEnd },
+    });
+    if (duplicate) {
+      return NextResponse.json(
+        { error: `A "${serviceType}" session already exists for this date.` },
+        { status: 409 }
+      );
+    }
+
     // If setting this session as active, close any other active sessions
     const sessionStatus = status || "active";
     if (sessionStatus === "active") {
