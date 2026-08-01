@@ -114,10 +114,17 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
             {/* Icon */}
             {getIcon(toast.type)}
 
-            {/* Content */}
+            {/* Content — the toast is a dark card in both themes, so its text is
+                forced light with inline colors (the global .text-* overrides remap
+                utility classes to the page theme, which would hide it in light mode). */}
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-white tracking-tight">{toast.title}</h4>
-              <p className="text-xs text-neutral-350 mt-1 leading-relaxed whitespace-pre-wrap">
+              <h4 className="text-sm font-bold tracking-tight" style={{ color: "#ffffff" }}>
+                {toast.title}
+              </h4>
+              <p
+                className="text-xs mt-1 leading-relaxed whitespace-pre-wrap"
+                style={{ color: "#cbd5e1" }}
+              >
                 {toast.message}
               </p>
             </div>
