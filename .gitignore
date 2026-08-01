@@ -25,6 +25,10 @@
 *.pem
 /scratch
 
+# internal project docs (kept local, not published)
+/implementation.md
+/structure.md
+
 
 # debug
 npm-debug.log*

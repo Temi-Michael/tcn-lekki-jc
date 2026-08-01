@@ -4,6 +4,16 @@ import { useEffect, useState } from "react";
 import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search, Copy, RefreshCw, Download, FileText } from "lucide-react";
 import { useAlert } from "@/components/AlertProvider";
 
+// Escapes values before they are interpolated into the print/PDF HTML string,
+// so a field containing markup can't inject script into the export window.
+const escapeHtml = (value: unknown) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 export default function TeachersAdminPage() {
   const { showAlert } = useAlert();
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -209,13 +219,13 @@ export default function TeachersAdminPage() {
       .map(
         (t, i) => `
         <tr style="background:${i % 2 === 0 ? "#f9fafb" : "#fff"}">
-          <td>${t.firstName} ${t.lastName}</td>
-          <td>${t.phone || "—"}</td>
-          <td>${t.email || "—"}</td>
-          <td>${t.profession || "—"}</td>
-          <td>${t.company || "—"}</td>
-          <td>${t.subunit || "—"}</td>
-          <td>${t.address || "—"}</td>
+          <td>${escapeHtml(t.firstName)} ${escapeHtml(t.lastName)}</td>
+          <td>${escapeHtml(t.phone || "—")}</td>
+          <td>${escapeHtml(t.email || "—")}</td>
+          <td>${escapeHtml(t.profession || "—")}</td>
+          <td>${escapeHtml(t.company || "—")}</td>
+          <td>${escapeHtml(t.subunit || "—")}</td>
+          <td>${escapeHtml(t.address || "—")}</td>
         </tr>`
       )
       .join("");

@@ -1,6 +1,6 @@
 # TCN Lekki Form Builder & Attendance Desk
 
-A modern, comprehensive Next.js 16 web application designed for the **TCN Lekki** church community. This portal streamlines event registrations, manages active directories for children and mentors, provides a self-service check-in kiosk, and delivers Sunday-based attendance reporting with automated absentee follow-up workflows.
+A modern, comprehensive Next.js 16 web application designed for the **TCN Lekki** church community. This portal streamlines event registrations, manages active directories for children and mentors, provides a self-service check-in kiosk, delivers Sunday-based attendance reporting with automated absentee follow-up workflows, and runs a book library with lending and overdue tracking.
 
 ---
 
@@ -17,8 +17,8 @@ A modern, comprehensive Next.js 16 web application designed for the **TCN Lekki*
 * **CSV Exporting:** Seamlessly download all form submissions for external analysis.
 
 ### 2. Centralized Roster Directories
-* **Children Directory:** Centralized portal containing names, ages, gender, date of birth, class, day/boarding status, preferred Sunday service, parent names, contact phones, and emails. Contains direct links to each child's historical attendance log. Registration requires the full core details and blocks duplicates (same name, parent phone, and date of birth).
-* **Mentors Directory:** List of all registered mentors with phone numbers, emails, professional details, sub-unit, and a historic service duty log. Mentors can self-register through a public link (`/register/mentor`) or be added by an admin; duplicates (same name and phone) are blocked.
+* **Children Directory:** Centralized portal containing names, ages, gender, date of birth, class, day/boarding status, preferred Sunday service, parent names, contact phones, and emails. Contains direct links to each child's historical attendance log. Registration requires the full core details and blocks duplicate children.
+* **Mentors Directory:** List of all registered mentors with phone numbers, emails, professional details, sub-unit, and a historic service duty log. Mentors can self-register through a public link (`/register/mentor`) or be added by an admin; duplicates are blocked.
 
 ### 3. Attendance & Session Manager
 * **Session Logging:** Create check-in sessions customized by Date, Title, and Service Type (`1st Service`, `2nd Service`, `Special Event`). Only one session per service type is allowed per date.
@@ -33,9 +33,19 @@ A modern, comprehensive Next.js 16 web application designed for the **TCN Lekki*
 * **Per-service Breakdown:** Each service shows present children with a boys/girls split, plus the mentor count.
 * **Distinct Sunday Total:** Anyone present at both services is counted **once** in the day's distinct totals.
 * **Date Filter:** Open any Sunday on record, not just the most recent.
-* **Absentee Follow-up:** Flags children who missed **3 or more consecutive Sundays** (regular services only; special events are ignored; counting starts once a child is registered and never flags an in-progress Sunday). Provides quick call shortcuts (`tel:`) and a "Mark contacted" action that hides a child until they miss another Sunday.
+* **Absentee Follow-up:** Flags children who missed several consecutive Sundays (regular services only), with quick call shortcuts and a "Mark contacted" action that clears a child until they miss again.
 
-### 5. Self-Service Check-in Kiosk
+### 5. Book Library & Lending
+* **Copy-level Inventory:** Each physical book is its own record, so two people donating the same title creates two independently-tracked copies — each keeping its own contributor.
+* **Title-grouped View:** The inventory groups copies by title into a single row (e.g. *"Title — 2 available / 2 · from Ada, John"*), with an **Add copy** action and an optional bulk *number of copies* field.
+* **Multiple Categories:** A book can carry several categories/genres, editable per title at any time.
+* **Flexible Attribution:** A contributor or borrower can be linked to a registered child or mentor, or entered as a free-text name (for parents and visitors).
+* **Lending & Returns:** Lend an available copy to a borrower (with optional phone/email) and a required due date capped at 2 months. Returning captures an optional condition and note. A copy can only be on one loan at a time, and a borrower may hold only one book at a time.
+* **Renew & Overdue Tracking:** Extend an active loan's due date within the cap, and filter loans by borrowed, overdue, and returned.
+* **Shelf Management:** Mark a copy lost, retire it, restore it, or permanently delete a mistaken entry — each behind a confirmation.
+* **Summary Cards:** Live totals for titles, total copies, available, on-loan, and overdue.
+
+### 6. Self-Service Check-in Kiosk
 * **Public Check-in Boards:** Tablet-friendly, session-scoped check-in pages for children (`/attendance/child/[sessionId]`) and mentors (`/attendance/teacher/[sessionId]`).
 * **Privacy-safe Roster:** Unauthenticated kiosk pages receive only the fields needed to check people in (name, age, gender, status) — never parent contact details.
 * **Name Search:** Quick search of the active roster by name.
@@ -46,12 +56,13 @@ A modern, comprehensive Next.js 16 web application designed for the **TCN Lekki*
 
 ## 🔒 Security & Data Protection
 
-* **Authenticated Admin Surface:** Every `/admin` page and every `/api/admin/*` endpoint requires a valid admin session, enforced in middleware. The only public exemptions are the session-scoped kiosk calls (check-in, and roster/session reads that carry a `sessionId`).
-* **Mandatory Signing Secret:** Sessions are signed with `JWT_SECRET`. The app fails closed if it is not configured — there is no insecure fallback.
-* **Gated Admin Bootstrap:** The initial admin can be created on a fresh install; once any admin exists, `/setup` (page and API) requires a logged-in admin.
-* **Brute-force Protection:** Login is rate-limited per client, backed by a self-expiring collection.
-* **Duplicate Protection:** Database-enforced uniqueness on children plus application-level checks on children and mentors.
-* **Minimal Data Exposure:** Public responses are scoped to non-sensitive fields, and API errors are generic (full detail is written to server logs only).
+Built with privacy in mind for an application that holds minors' data:
+
+* **Authenticated Admin Surface:** The entire admin area and its APIs require a valid admin session; only the public kiosk check-in flow is exempt.
+* **Fail-closed Sessions:** Sessions are signed with a mandatory secret — the app refuses to run without it, with no insecure fallback.
+* **Gated Admin Bootstrap & Brute-force Protection:** Admin creation is locked down after initial setup, and login is rate-limited.
+* **Duplicate Protection:** Database-enforced uniqueness plus application-level checks keep the registers clean.
+* **Minimal Data Exposure:** Public responses are scoped to non-sensitive fields, and error responses are generic (full detail stays in server logs).
 
 ---
 
@@ -62,162 +73,6 @@ A modern, comprehensive Next.js 16 web application designed for the **TCN Lekki*
 * **Styling:** Tailwind CSS v4
 * **Database:** MongoDB (via Mongoose ODM)
 * **Authentication:** JWT Sessions (`jose` & `bcryptjs`) secured via Next.js Middleware cookies (`admin_session`)
-
----
-
-## 📂 Database Architecture & Schemas
-
-The application uses eight MongoDB collections defined inside the `src/models/` folder:
-
-```mermaid
-erDiagram
-    Admin {
-        string username
-        string password
-    }
-    Form {
-        string title
-        string slug
-        string status
-        array fields
-    }
-    Submission {
-        ObjectId formId
-        string firstName
-        string lastName
-        int age
-        Map data
-        string status
-    }
-    Child {
-        string firstName
-        string lastName
-        int age
-        string gender
-        date dob
-        string schoolClass
-        string dayOrBoarding
-        string sundayService
-        string parentName
-        string parentPhone
-        string parentEmail
-        date lastContactedAt
-        string status
-    }
-    Teacher {
-        string firstName
-        string lastName
-        string phone
-        string email
-        string profession
-        string subunit
-        string status
-    }
-    AttendanceSession {
-        string title
-        date date
-        string serviceType
-        string status
-        ObjectIdArray teachersAvailable
-        string notes
-    }
-    AttendanceRecord {
-        ObjectId sessionId
-        ObjectId childId
-        ObjectId teacherId
-        string recordType
-        date checkInTime
-        string checkedInBy
-        string status
-    }
-    LoginAttempt {
-        string key
-        int count
-        date expiresAt
-    }
-
-    Form ||--o{ Submission : "has"
-    AttendanceSession ||--o{ AttendanceRecord : "contains"
-    Child ||--o{ AttendanceRecord : "checked-in as"
-    Teacher ||--o{ AttendanceRecord : "checked-in as"
-    AttendanceSession }o--o{ Teacher : "scheduled"
-```
-
-### Collection Details & Indexing
-
-#### 1. `Child`
-* **Fields:** `firstName`, `lastName`, `age`, `gender` (Male/Female), `dob`, `schoolClass`, `dayOrBoarding` (Day/Boarding), `sundayService` (1st Service/2nd Service/Either), `parentName`, `parentPhone`, `parentEmail`, `phone`, `email`, `customData` (Map), `lastContactedAt`, `status` (active/inactive). Core identity and guardian fields are required.
-* **Indexes:** Search indexes `{ firstName: 1, lastName: 1 }` and `{ parentPhone: 1 }`, plus a unique identity index `{ firstName, lastName, parentPhone, dob }` (case-insensitive) to prevent duplicate children.
-
-#### 2. `Teacher` (Mentors)
-* **Fields:** `firstName`, `lastName`, `phone`, `email`, `dob`, `weddingAnniversary`, `address`, `profession`, `company`, `subunit`, `status` (active/inactive).
-* **Indexes:** Compound index `{ firstName: 1, lastName: 1 }`.
-
-#### 3. `Form`
-* **Fields:** `title`, `slug` (unique), `status` (active/disabled), `fields` (Array of FormField: `name`, `label`, `type`, `required`, `options`).
-
-#### 4. `Submission`
-* **Fields:** `formId` (Ref `Form`), `firstName`, `lastName`, `age`, `data` (Map of custom inputs), `status` (approved/needs_review/rejected).
-* **Indexes:** Compound index `{ formId: 1, firstName: 1, lastName: 1 }` to optimize duplicate check speeds.
-
-#### 5. `AttendanceSession`
-* **Fields:** `title`, `slug`, `date`, `serviceType` (1st Service/2nd Service/Special Event), `status` (active/closed), `teachersAvailable` (Refs `Teacher`), `notes`.
-* **Indexes:** Compound index `{ date: 1, serviceType: 1 }`.
-
-#### 6. `AttendanceRecord`
-* **Fields:** `sessionId` (Ref `AttendanceSession`), `childId` (Ref `Child`), `teacherId` (Ref `Teacher`), `recordType` (child/teacher), `checkInTime`, `checkedInBy` (self/admin), `status` (present/absent).
-* **Indexes:** Compound unique partial indexes to prevent double check-ins:
-  * `{ sessionId: 1, childId: 1 }` (unique, partial)
-  * `{ sessionId: 1, teacherId: 1 }` (unique, partial)
-
-#### 7. `Admin`
-* **Fields:** `username` (unique), `password` (bcrypt hash). Capped at two accounts.
-
-#### 8. `LoginAttempt`
-* **Fields:** `key` (client identifier), `count`, `expiresAt`.
-* **Indexes:** TTL index on `expiresAt` (`expireAfterSeconds: 0`) so records self-expire.
-
----
-
-## 🌐 API Route Directory
-
-### Authentication
-* `POST /api/auth/setup` - Creates an admin account (open on first run; requires a logged-in admin thereafter).
-* `POST /api/auth/login` - Signs in admins and issues cookie (rate-limited).
-* `POST /api/auth/logout` - Clears admin session cookie.
-
-### Public Client Endpoints
-* `GET /api/forms/[slug]` - Fetches a form's custom fields and configuration.
-* `POST /api/submissions` - Submits a guest/child event registration.
-* `POST /api/check-duplicate` - Performs real-time validation checks for names/ages on forms.
-* `POST /api/mentors/register` - Public mentor self-registration.
-
-### Protected Admin Endpoints (`/api/admin/*`)
-* `GET /api/admin/stats` - Overall dashboard stats counter.
-* `GET /api/admin/forms` - Retrieves list of all forms.
-* `POST /api/admin/forms` - Creates a new dynamic form.
-* `DELETE /api/admin/forms/[id]` - Deletes a form configuration.
-* `GET /api/admin/forms/[id]/submissions` - Retrieve form submissions.
-* `GET /api/admin/forms/[id]/export` - Exports submissions as CSV file.
-* `PATCH /api/admin/submissions/[id]` - Updates status (e.g. Approve a needs_review submission).
-* `DELETE /api/admin/submissions/[id]` - Deletes a specific submission.
-* `GET /api/admin/children` - Retrieves children directory list.
-* `POST /api/admin/children` - Registers a child manually (with duplicate protection).
-* `GET /api/admin/children/export` - Exports the children directory as CSV.
-
-### Protected Attendance Endpoints (`/api/admin/attendance/*`)
-* `GET /api/admin/attendance/stats` - Stats on children/mentors counts, attendance rate, and absentee follow-up list.
-* `GET /api/admin/attendance/reports` - Sunday-grouped attendance reports (per-service and distinct rollups, follow-up list). Supports `?date=YYYY-MM-DD` and `?limit=N`.
-* `POST /api/admin/attendance/followup` - Marks an absent child as contacted, or undoes it.
-* `GET /api/admin/attendance/sessions` - Retrieves list of sessions. Pass `active=true` to get the current desk check-in session.
-* `POST /api/admin/attendance/sessions` - Creates and launches a new service attendance session (one per service type per date).
-* `PATCH /api/admin/attendance/sessions` - Toggles status (Open/Close session).
-* `GET /api/admin/attendance/roster` - Retrieves roster check-in mapping for a session (fields scoped by authentication).
-* `POST /api/admin/attendance/checkin` - Toggles check-in state (present/absent) for children/mentors.
-* `GET /api/admin/attendance/export` - Export session roster as a CSV attendance report.
-* `GET /api/admin/attendance/teachers` - Retrieves registered mentors list.
-* `POST /api/admin/attendance/teachers` - Registers a new mentor (with duplicate protection).
-* `GET /api/admin/attendance/teachers/export` - Exports the mentors directory as CSV.
 
 ---
 

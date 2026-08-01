@@ -13,15 +13,14 @@ export async function GET(request: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
-    // Escape user input so regex metacharacters ("(", "[", "\", ...) are
-    // matched literally instead of crashing the query or enabling ReDoS.
-    // The length cap bounds the pattern size; 100 chars is far beyond any
-    // real name or phone search.
+    // Escape metacharacters ("(", "[", "\", ...) and cap the length, then pass
+    // the literal string to Mongo's $regex (not a JS RegExp on user input) so
+    // there is no ReDoS surface. 100 chars is far beyond any real name/phone.
     const query = escapeRegExp((searchParams.get("query") || "").trim().slice(0, 100));
 
     let filter: any = {};
     if (query) {
-      const searchRegex = new RegExp(query, "i");
+      const searchRegex = { $regex: query, $options: "i" };
       filter = {
         $or: [
           { firstName: searchRegex },

@@ -258,7 +258,7 @@ export default function SundayReportsPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <a
-                    href={`tel:${c.parentPhone}`}
+                    href={`tel:${(c.parentPhone || "").replace(/[^0-9+]/g, "")}`}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all"
                   >
                     <Phone className="w-3.5 h-3.5" /> Call
