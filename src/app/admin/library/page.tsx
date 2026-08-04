@@ -16,6 +16,7 @@ import {
   Pencil,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   CornerDownLeft,
   CheckCircle2,
 } from "lucide-react";
@@ -52,6 +53,7 @@ type CopyActionKind = "lost" | "retired" | "available" | "delete";
 
 const CONDITIONS = ["New", "Good", "Fair", "Worn"];
 const EMPTY_PERSON: Person = { kind: null, id: null, name: "" };
+const PER_PAGE = 8; // book titles shown per inventory page
 
 const COPY_ACTION_TEXT: Record<CopyActionKind, { title: string; message: string; confirm: string; danger?: boolean }> = {
   lost: {
@@ -170,6 +172,7 @@ export default function LibraryPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [invPage, setInvPage] = useState(1);
 
   // Add / add-copy form
   const [showForm, setShowForm] = useState(false);
@@ -295,6 +298,7 @@ export default function LibraryPage() {
 
   const onSearch = (value: string) => {
     setSearch(value);
+    setInvPage(1);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => fetchLibrary(value || undefined), 300);
   };
@@ -585,6 +589,13 @@ export default function LibraryPage() {
   const onLoanCount = groups.reduce((s, g) => s + g.borrowed, 0);
   const overdueCount = borrowedLoans.filter(isOverdue).length;
 
+  // Inventory pagination (10 titles per page)
+  const totalPages = Math.max(1, Math.ceil(groups.length / PER_PAGE));
+  const pagedGroups = groups.slice((invPage - 1) * PER_PAGE, invPage * PER_PAGE);
+  useEffect(() => {
+    if (invPage > totalPages) setInvPage(totalPages);
+  }, [invPage, totalPages]);
+
   const shownLoans =
     loanFilter === "borrowed"
       ? borrowedLoans
@@ -632,7 +643,7 @@ export default function LibraryPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
           <h3 className="text-neutral-500 text-xs font-semibold uppercase tracking-wider mb-1">Titles</h3>
           <p className="text-2xl font-bold text-white">{totalTitles}</p>
@@ -838,7 +849,7 @@ export default function LibraryPage() {
             </p>
           </div>
         ) : (
-          groups.map((g) => {
+          pagedGroups.map((g) => {
             const open = expanded === g.key;
             const firstAvailable = g.copies.find((c) => c.status === "available");
             return (
@@ -862,8 +873,8 @@ export default function LibraryPage() {
                       </p>
                     </div>
                   </button>
-                  <div className="flex items-center gap-3 shrink-0 pl-8 sm:pl-0">
-                    <span className="text-xs text-neutral-400 whitespace-nowrap">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0 pl-8 sm:pl-0">
+                    <span className="text-xs text-neutral-400 whitespace-nowrap mr-auto sm:mr-0">
                       <span className={g.available > 0 ? "text-green-400 font-semibold" : ""}>
                         {g.available} available
                       </span>{" "}
@@ -969,6 +980,29 @@ export default function LibraryPage() {
               </div>
             );
           })
+        )}
+
+        {/* Pagination */}
+        {groups.length > PER_PAGE && (
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <button
+              onClick={() => setInvPage((p) => Math.max(1, p - 1))}
+              disabled={invPage <= 1}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Prev
+            </button>
+            <span className="text-xs text-neutral-500">
+              Page {invPage} of {totalPages} · {totalTitles} titles
+            </span>
+            <button
+              onClick={() => setInvPage((p) => Math.min(totalPages, p + 1))}
+              disabled={invPage >= totalPages}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
       </div>
 

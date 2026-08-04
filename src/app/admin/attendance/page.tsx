@@ -524,15 +524,15 @@ export default function AttendanceAdminPage() {
                         : "bg-neutral-950 border-neutral-855 hover:bg-neutral-900"
                     }`}
                   >
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-white text-sm truncate max-w-[170px] sm:max-w-none">{session.title}</h3>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <h3 className="font-semibold text-white text-sm truncate">{session.title}</h3>
                       <div className="flex items-center gap-1.5 text-xs text-neutral-500">
                         <Calendar className="w-3.5 h-3.5 shrink-0" />
                         {new Date(session.date).toLocaleDateString()}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       {session.status === "active" ? (
                         <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full border bg-green-500/10 text-green-400 border-green-500/20">
                           {session.status}
@@ -558,9 +558,9 @@ export default function AttendanceAdminPage() {
               
               {/* Session Overview Header */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-neutral-800">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold text-white">{selectedSession.title}</h2>
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-xl font-bold text-white break-words min-w-0">{selectedSession.title}</h2>
                     {selectedSession.status === "active" ? (
                       <span className="px-2 py-0.5 text-[10px] uppercase font-bold rounded border bg-green-500/10 text-green-400 border-green-500/20">
                         {selectedSession.status}
@@ -576,7 +576,7 @@ export default function AttendanceAdminPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                   {/* Toggle Active/Closed */}
                   <button
                     onClick={() => handleToggleSessionStatus(selectedSession._id, selectedSession.status)}

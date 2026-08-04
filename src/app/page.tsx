@@ -15,7 +15,7 @@ export default function Home() {
       <nav className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
-          <span className="text-2xl font-bold text-indigo-950 tracking-tight">TCN Lekki</span>
+          <span className="text-2xl font-bold text-indigo-950 tracking-tight">TCN Junior Church</span>
         </div>
       </nav>
 
@@ -23,15 +23,15 @@ export default function Home() {
       <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-6 text-center">
         <div className="max-w-3xl space-y-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 font-medium text-sm mb-4">
-            <Star className="w-4 h-4 fill-indigo-700" /> Welcome to Our Family
+            <Star className="w-4 h-4 fill-indigo-700" /> Junior Church · Ages 10–16
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-800 to-purple-600 tracking-tight pb-2">
             Growing in Faith,<br />Together.
           </h1>
-          
+
           <p className="text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Register your kids and teens for our upcoming events, summer camps, and Sunday school programs. 
+            A community for pre-teens and teens (ages 10–16) to grow in faith, build real friendships, and discover their purpose. Register for our programs, events, and camps.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12 max-w-5xl mx-auto">
@@ -39,8 +39,8 @@ export default function Home() {
             <div className="bg-card-bg/60 backdrop-blur-xl rounded-3xl shadow-xl border border-card-border/50 overflow-hidden hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
               <div className="relative h-48 w-full overflow-hidden border-b border-card-border/40">
                 <img 
-                  src="/images/safe_loving.png" 
-                  alt="Safe & Loving Sunday School"
+                  src="/images/safe_loving.png"
+                  alt="Faith that sticks"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
                 <div className="absolute top-4 right-4 w-10 h-10 bg-card-bg/90 border border-card-border/80 rounded-xl flex items-center justify-center shadow-md">
@@ -49,8 +49,8 @@ export default function Home() {
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between text-left">
                 <div>
-                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Safe & Loving</h3>
-                  <p className="text-sm text-text-secondary leading-relaxed">A nurturing environment where every child is cherished, guided, and protected.</p>
+                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Faith That Sticks</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">Honest teaching and real conversations about God, life, and the questions that actually matter to you.</p>
                 </div>
               </div>
             </div>
@@ -59,8 +59,8 @@ export default function Home() {
             <div className="bg-card-bg/60 backdrop-blur-xl rounded-3xl shadow-xl border border-card-border/50 overflow-hidden hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
               <div className="relative h-48 w-full overflow-hidden border-b border-card-border/40">
                 <img 
-                  src="/images/fun_activities.png" 
-                  alt="Fun Activities"
+                  src="/images/fun_activities.png"
+                  alt="More than Sundays"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
                 <div className="absolute top-4 right-4 w-10 h-10 bg-card-bg/90 border border-card-border/80 rounded-xl flex items-center justify-center shadow-md">
@@ -69,8 +69,8 @@ export default function Home() {
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between text-left">
                 <div>
-                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Fun Activities</h3>
-                  <p className="text-sm text-text-secondary leading-relaxed">Engaging lessons, crafts, and games designed specifically to make faith enjoyable.</p>
+                  <h3 className="text-xl font-extrabold text-text-primary mb-2">More Than Sundays</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">Hangouts, camps, and challenges that make growing in faith something you actually look forward to.</p>
                 </div>
               </div>
             </div>
@@ -79,8 +79,8 @@ export default function Home() {
             <div className="bg-card-bg/60 backdrop-blur-xl rounded-3xl shadow-xl border border-card-border/50 overflow-hidden hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
               <div className="relative h-48 w-full overflow-hidden border-b border-card-border/40">
                 <img 
-                  src="/images/community.png" 
-                  alt="Community"
+                  src="/images/community.png"
+                  alt="Your crew"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
                 <div className="absolute top-4 right-4 w-10 h-10 bg-card-bg/90 border border-card-border/80 rounded-xl flex items-center justify-center shadow-md">
@@ -89,8 +89,8 @@ export default function Home() {
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between text-left">
                 <div>
-                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Community</h3>
-                  <p className="text-sm text-text-secondary leading-relaxed">Building lifelong friendships and a supportive network for spiritual growth.</p>
+                  <h3 className="text-xl font-extrabold text-text-primary mb-2">Your Crew</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">Friends and mentors who have your back as you grow, serve, and discover your God-given gifts.</p>
                 </div>
               </div>
             </div>

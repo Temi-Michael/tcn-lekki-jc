@@ -3,7 +3,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FileText, LogOut, Menu, X, Calendar, Users, Smile, BarChart3, BookOpen } from "lucide-react";
+import { LayoutDashboard, FileText, LogOut, Menu, X, Calendar, Users, Smile, BarChart3, BookOpen, Coins } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-neutral-950 flex flex-col md:flex-row">
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-neutral-900 border-b border-neutral-800 z-40 relative">
-        <h1 className="text-lg font-bold text-white tracking-tight">Smart Attendance</h1>
+        <h1 className="text-lg font-bold text-white tracking-tight">TCN Junior Church</h1>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-neutral-300 hover:text-white p-1">
@@ -41,7 +41,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-neutral-900 border-r border-neutral-800 flex flex-col transform transition-transform duration-300 ease-in-out md:sticky md:top-0 md:h-screen md:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="p-6">
-          <h1 className="text-xl font-bold text-white tracking-tight">Smart Attendance</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">TCN Junior Church</h1>
           <p className="text-xs text-neutral-500 mt-1">Admin Portal</p>
         </div>
         
@@ -53,6 +53,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             { href: "/admin/attendance", label: "Attendance", icon: <Calendar className="w-5 h-5" />, active: pathname.startsWith("/admin/attendance") },
             { href: "/admin/reports", label: "Sunday Reports", icon: <BarChart3 className="w-5 h-5" />, active: pathname === "/admin/reports" },
             { href: "/admin/library", label: "Library", icon: <BookOpen className="w-5 h-5" />, active: pathname.startsWith("/admin/library") },
+            { href: "/admin/offerings", label: "Offerings", icon: <Coins className="w-5 h-5" />, active: pathname.startsWith("/admin/offerings") },
             { href: "/admin/teachers", label: "Mentors", icon: <Users className="w-5 h-5" />, active: pathname === "/admin/teachers" },
           ].map(({ href, label, icon, active }) => (
             <Link
