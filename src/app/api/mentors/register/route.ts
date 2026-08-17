@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Teacher from "@/models/Teacher";
 import { isDuplicateMentor, DUPLICATE_MENTOR_MESSAGE } from "@/lib/mentorDuplicate";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
   try {
@@ -45,6 +46,17 @@ export async function POST(request: Request) {
       subunit,
       status: "active",
     });
+
+    await logActivity(
+      {
+        action: "mentor.self_register",
+        summary: `${firstName.trim()} ${lastName.trim()} self-registered as a mentor`,
+        actor: { name: `${firstName.trim()} ${lastName.trim()}` },
+        targetType: "Teacher",
+        targetId: newMentor._id,
+      },
+      request
+    );
 
     return NextResponse.json(newMentor, { status: 201 });
   } catch (error: any) {

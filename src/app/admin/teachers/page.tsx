@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search, Copy, RefreshCw, Download, FileText } from "lucide-react";
+import { Plus, UserPlus, Phone, Mail, Loader2, Award, Calendar, CheckSquare, X, Search, Copy, RefreshCw, Download, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAlert } from "@/components/AlertProvider";
+
+const TEACHERS_PER_PAGE = 12;
 
 // Escapes values before they are interpolated into the print/PDF HTML string,
 // so a field containing markup can't inject script into the export window.
@@ -40,6 +42,7 @@ export default function TeachersAdminPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [teacherPage, setTeacherPage] = useState(1);
 
   useEffect(() => {
     fetchTeachers();
@@ -254,6 +257,15 @@ export default function TeachersAdminPage() {
     win.focus();
     setTimeout(() => { win.print(); }, 300);
   };
+
+  const teacherTotalPages = Math.max(1, Math.ceil(teachers.length / TEACHERS_PER_PAGE));
+  const pagedTeachers = teachers.slice(
+    (teacherPage - 1) * TEACHERS_PER_PAGE,
+    teacherPage * TEACHERS_PER_PAGE
+  );
+  useEffect(() => {
+    if (teacherPage > teacherTotalPages) setTeacherPage(teacherTotalPages);
+  }, [teacherPage, teacherTotalPages]);
 
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full">
@@ -503,7 +515,7 @@ export default function TeachersAdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-800/50">
-                    {teachers.map((teacher) => (
+                    {pagedTeachers.map((teacher) => (
                       <tr key={teacher._id} className="hover:bg-neutral-800/30 transition-colors">
                         <td className="px-4 py-4 font-medium text-white flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
@@ -541,6 +553,28 @@ export default function TeachersAdminPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {teachers.length > TEACHERS_PER_PAGE && (
+              <div className="flex items-center justify-between gap-3 pt-4">
+                <button
+                  onClick={() => setTeacherPage((p) => Math.max(1, p - 1))}
+                  disabled={teacherPage <= 1}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                </button>
+                <span className="text-xs text-neutral-500">
+                  Page {teacherPage} of {teacherTotalPages} · {teachers.length} mentors
+                </span>
+                <button
+                  onClick={() => setTeacherPage((p) => Math.min(teacherTotalPages, p + 1))}
+                  disabled={teacherPage >= teacherTotalPages}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>

@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db";
 import Book from "@/models/Book";
 import BookLoan from "@/models/BookLoan";
 import { escapeRegExp } from "@/lib/matching";
+import { logActivity } from "@/lib/activity";
 
 const MAX_BULK_COPIES = 50;
 
@@ -153,6 +154,16 @@ export async function POST(request: Request) {
 
     const created = await Book.insertMany(Array.from({ length: count }, () => ({ ...base })));
 
+    await logActivity(
+      {
+        action: "book.add",
+        summary: `Added ${created.length} ${created.length === 1 ? "copy" : "copies"} of "${base.title}"`,
+        targetType: "Book",
+        targetId: created[0]?._id,
+      },
+      request
+    );
+
     return NextResponse.json({ created: created.length, books: created }, { status: 201 });
   } catch (error: any) {
     console.error("API error:", error);
@@ -208,9 +219,19 @@ export async function PATCH(request: Request) {
       Object.assign(update, resolveContributor(contributorKind, contributorId));
     }
 
+    const changeSummary = status
+      ? `${status === "available" ? "Restored" : status === "lost" ? "Marked lost" : "Retired"} a book copy`
+      : category !== undefined
+      ? "Updated book categories"
+      : "Updated book details";
+
     // Bulk edit (e.g. re-categorising every copy of a title at once).
     if (isBulk) {
       const result = await Book.updateMany({ _id: { $in: bookIds } }, update, { runValidators: true });
+      await logActivity(
+        { action: "book.update", summary: `${changeSummary} (${result.modifiedCount} copies)`, targetType: "Book" },
+        request
+      );
       return NextResponse.json({ updated: result.modifiedCount });
     }
 
@@ -218,6 +239,11 @@ export async function PATCH(request: Request) {
     if (!book) {
       return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
+
+    await logActivity(
+      { action: "book.update", summary: `${changeSummary}: "${book.title}"`, targetType: "Book", targetId: book._id },
+      request
+    );
 
     return NextResponse.json(book);
   } catch (error: any) {
@@ -259,6 +285,16 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
     await BookLoan.deleteMany({ bookId });
+
+    await logActivity(
+      {
+        action: "book.delete",
+        summary: `Deleted a copy of "${book.title}"`,
+        targetType: "Book",
+        targetId: book._id,
+      },
+      request
+    );
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

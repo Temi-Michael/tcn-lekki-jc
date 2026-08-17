@@ -3,12 +3,15 @@ import type { NextRequest } from "next/server";
 import dbConnect from "@/lib/db";
 import Admin from "@/models/Admin";
 import { hashPassword, verifySession } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
 
-    const adminCount = await Admin.countDocuments();
+    // Only super_admins count toward the bootstrap gate/cap — mentor logins are
+    // provisioned separately from the Access tab and are unlimited.
+    const adminCount = await Admin.countDocuments({ role: "super_admin" });
 
     // Bootstrap: the very first admin can be created without a session.
     // Once any admin exists, only a logged-in admin may create another.
@@ -44,7 +47,20 @@ export async function POST(request: NextRequest) {
     const admin = await Admin.create({
       username,
       password: hashedPassword,
+      role: "super_admin",
+      status: "active",
     });
+
+    await logActivity(
+      {
+        action: "admin.setup",
+        summary: `Created super admin account "${username}"`,
+        actor: { id: admin._id.toString(), name: username, role: "super_admin" },
+        targetType: "Admin",
+        targetId: admin._id,
+      },
+      request
+    );
 
     return NextResponse.json({ success: true, message: "Admin created successfully. Please login." });
   } catch (error) {

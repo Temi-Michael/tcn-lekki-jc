@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Child from "@/models/Child";
+import { logActivity } from "@/lib/activity";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await dbConnect();
     const children = await Child.find({ status: "active" }).sort({ firstName: 1, lastName: 1 });
+    await logActivity(
+      { action: "export.children", summary: `Exported the children directory (${children.length} records)` },
+      request
+    );
 
     const csvRows: string[] = [];
     csvRows.push(`"TCN Lekki - Children Directory"`);

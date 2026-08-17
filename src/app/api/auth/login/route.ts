@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Admin from "@/models/Admin";
+import Teacher from "@/models/Teacher";
 import LoginAttempt from "@/models/LoginAttempt";
 import { comparePasswords, createSession } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 
-// Rate limiting is keyed by IP (not username) because mentors share one login,
-// so an account-based lockout would let one fumbling mentor lock out everyone.
-// A successful login clears the counter, so normal shared use keeps it near zero.
-const MAX_FAILED_ATTEMPTS = 10;
+// Two throttles: per-IP (a shared device / brute-force from one source) and
+// per-account (brute-forcing one mentor's 6-digit PIN). Either being over the
+// limit blocks the attempt; a success clears both.
+const MAX_FAILED_ATTEMPTS = 10; // per IP
+const MAX_ACCOUNT_ATTEMPTS = 8; // per username
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 function getClientKey(request: Request) {
@@ -16,50 +19,89 @@ function getClientKey(request: Request) {
   return request.headers.get("x-real-ip") || "unknown";
 }
 
+async function isOverLimit(key: string, now: number, max: number) {
+  const attempt = await LoginAttempt.findOne({ key });
+  const active = attempt && attempt.expiresAt.getTime() > now;
+  return !!(active && attempt.count >= max);
+}
+
+async function recordFailure(key: string, now: number) {
+  const attempt = await LoginAttempt.findOne({ key });
+  const active = attempt && attempt.expiresAt.getTime() > now;
+  if (active) {
+    await LoginAttempt.updateOne({ key }, { $inc: { count: 1 } });
+  } else {
+    await LoginAttempt.updateOne(
+      { key },
+      { $set: { count: 1, expiresAt: new Date(now + WINDOW_MS) } },
+      { upsert: true }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     await dbConnect();
     const { username, password } = await request.json();
+    const secret = password; // may be a password (super_admin) or a PIN (mentor)
 
-    if (!username || !password) {
+    if (!username || !secret) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
     }
 
-    const key = getClientKey(request);
+    const ipKey = getClientKey(request);
+    const acctKey = `acct:${String(username).toLowerCase()}`;
     const now = Date.now();
 
-    // Block before checking the password if this client is over the limit within
-    // an active window. This is what actually stops brute-forcing.
-    const attempt = await LoginAttempt.findOne({ key });
-    const windowActive = attempt && attempt.expiresAt.getTime() > now;
-    if (windowActive && attempt.count >= MAX_FAILED_ATTEMPTS) {
+    if ((await isOverLimit(ipKey, now, MAX_FAILED_ATTEMPTS)) || (await isOverLimit(acctKey, now, MAX_ACCOUNT_ATTEMPTS))) {
       return NextResponse.json(
         { error: "Too many login attempts. Please try again later." },
         { status: 429 }
       );
     }
 
-    const admin = await Admin.findOne({ username });
-    const isValid = admin ? await comparePasswords(password, admin.password) : false;
+    const user = await Admin.findOne({ username }).select("+password +pinHash");
+    const active = user && user.status !== "disabled";
+    const hash = user?.password || user?.pinHash || null;
+    const isValid = active && hash ? await comparePasswords(secret, hash) : false;
 
-    if (!admin || !isValid) {
-      // Count the failure: start a fresh window, or increment the active one.
-      if (windowActive) {
-        await LoginAttempt.updateOne({ key }, { $inc: { count: 1 } });
-      } else {
-        await LoginAttempt.updateOne(
-          { key },
-          { $set: { count: 1, expiresAt: new Date(now + WINDOW_MS) } },
-          { upsert: true }
-        );
-      }
+    if (!isValid || !user) {
+      await recordFailure(ipKey, now);
+      await recordFailure(acctKey, now);
+      await logActivity(
+        { action: "login.fail", summary: `Failed sign-in for "${username}"`, actor: { name: String(username) } },
+        request
+      );
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // Success clears the counter for this client.
-    await LoginAttempt.deleteOne({ key });
+    // Success clears both counters.
+    await LoginAttempt.deleteOne({ key: ipKey });
+    await LoginAttempt.deleteOne({ key: acctKey });
 
-    const token = await createSession(admin._id.toString(), admin.username);
+    // Resolve a display name (a mentor's real name, from their Teacher record).
+    let name = user.username;
+    if (user.teacherId) {
+      const teacher = await Teacher.findById(user.teacherId).select("firstName lastName");
+      if (teacher) name = `${teacher.firstName} ${teacher.lastName}`.trim();
+    }
+
+    const token = await createSession({
+      userId: user._id.toString(),
+      username: user.username,
+      role: user.role,
+      teacherId: user.teacherId ? user.teacherId.toString() : null,
+      name,
+    });
+
+    await logActivity(
+      {
+        action: "login.success",
+        summary: `${name} signed in`,
+        actor: { id: user._id.toString(), name, role: user.role },
+      },
+      request
+    );
 
     const response = NextResponse.json({ success: true });
     response.cookies.set({

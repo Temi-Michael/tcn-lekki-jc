@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Offering from "@/models/Offering";
+import { logActivity } from "@/lib/activity";
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -56,6 +57,11 @@ export async function GET(request: Request) {
     });
 
     const grandTotal = offerings.reduce((s, o) => s + o.total, 0);
+
+    await logActivity(
+      { action: "export.offerings", summary: `Exported offerings ${from} to ${to} (₦${grandTotal.toLocaleString()})` },
+      request
+    );
     const totalRow = ["TOTAL", "", ...DENOMINATIONS.map(() => ""), grandTotal, ""];
 
     const csv = [header, ...rows, totalRow]

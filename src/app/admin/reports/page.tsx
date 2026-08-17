@@ -12,8 +12,12 @@ import {
   Undo2,
   RefreshCw,
   CalendarSearch,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useAlert } from "@/components/AlertProvider";
+
+const REPORTS_PER_PAGE = 6;
 
 const formatDay = (key: string) =>
   new Date(`${key}T12:00:00`).toLocaleDateString(undefined, {
@@ -30,9 +34,11 @@ export default function SundayReportsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [filterDate, setFilterDate] = useState("");
   const [busyChild, setBusyChild] = useState<string | null>(null);
+  const [reportPage, setReportPage] = useState(1);
 
   const fetchReports = useCallback(async (date?: string) => {
-    const qs = date ? `?date=${date}` : "";
+    // Pull a wide window of Sundays and paginate them client-side.
+    const qs = date ? `?date=${date}` : "?limit=52";
     const res = await fetch(`/api/admin/attendance/reports${qs}`);
     const json = await res.json();
     if (res.ok) setData(json);
@@ -57,6 +63,7 @@ export default function SundayReportsPage() {
 
   const onDateChange = async (value: string) => {
     setFilterDate(value);
+    setReportPage(1);
     setLoading(true);
     await fetchReports(value || undefined);
     setLoading(false);
@@ -91,6 +98,12 @@ export default function SundayReportsPage() {
 
   const summary = data?.summary;
   const sundays: any[] = data?.sundays || [];
+  const reportTotalPages = Math.max(1, Math.ceil(sundays.length / REPORTS_PER_PAGE));
+  const safeReportPage = Math.min(reportPage, reportTotalPages);
+  const pagedSundays = sundays.slice(
+    (safeReportPage - 1) * REPORTS_PER_PAGE,
+    safeReportPage * REPORTS_PER_PAGE
+  );
   const followUp: any[] = data?.followUp || [];
   const activeFollowUps = followUp.filter((f) => !f.contacted);
   const contactedFollowUps = followUp.filter((f) => f.contacted);
@@ -184,7 +197,7 @@ export default function SundayReportsPage() {
             </p>
           </div>
         ) : (
-          sundays.map((sunday) => (
+          pagedSundays.map((sunday) => (
             <div key={sunday.date} className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-neutral-800/60">
                 <div className="flex items-center gap-2.5">
@@ -227,6 +240,28 @@ export default function SundayReportsPage() {
               </div>
             </div>
           ))
+        )}
+
+        {!filterDate && sundays.length > REPORTS_PER_PAGE && (
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <button
+              onClick={() => setReportPage(Math.max(1, safeReportPage - 1))}
+              disabled={safeReportPage <= 1}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Prev
+            </button>
+            <span className="text-xs text-neutral-500">
+              Page {safeReportPage} of {reportTotalPages} · {sundays.length} Sundays
+            </span>
+            <button
+              onClick={() => setReportPage(Math.min(reportTotalPages, safeReportPage + 1))}
+              disabled={safeReportPage >= reportTotalPages}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
       </div>
 

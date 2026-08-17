@@ -44,17 +44,16 @@ BookLoanSchema.index(
   { bookId: 1, status: 1 },
   { unique: true, partialFilterExpression: { status: "borrowed" } }
 );
-// Enforce "one book on loan per borrower at a time" for linked people. Partial +
-// unique so the limit holds even under concurrent lends; the $exists guard keeps
-// free-text-name loans (no linked id) out of the index so they never collide.
+// A registered child may hold only one book at a time — enforced atomically by
+// this partial unique index (the $exists guard keeps free-text-name loans out so
+// they never collide). Mentors may hold up to two, which a single unique index
+// can't express, so the mentor index is a plain lookup index and the 2-book limit
+// is enforced in the loan route.
 BookLoanSchema.index(
   { borrowerChildId: 1, status: 1 },
   { unique: true, partialFilterExpression: { borrowerChildId: { $exists: true }, status: "borrowed" } }
 );
-BookLoanSchema.index(
-  { borrowerTeacherId: 1, status: 1 },
-  { unique: true, partialFilterExpression: { borrowerTeacherId: { $exists: true }, status: "borrowed" } }
-);
+BookLoanSchema.index({ borrowerTeacherId: 1, status: 1 });
 BookLoanSchema.index({ status: 1, dueDate: 1 });
 
 if (mongoose.models.BookLoan) {

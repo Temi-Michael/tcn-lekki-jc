@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
 import Offering from "@/models/Offering";
+import { logActivity } from "@/lib/activity";
 
 // Naira notes, high to low. The offering total is always computed from these on
 // the server so a tampered client total can never be persisted.
@@ -110,6 +111,15 @@ export async function POST(request: Request) {
         total,
         notes: notes?.trim() || undefined,
       });
+      await logActivity(
+        {
+          action: "offering.record",
+          summary: `Recorded ${serviceType} offering ₦${total.toLocaleString()} for ${date}`,
+          targetType: "Offering",
+          targetId: offering._id,
+        },
+        request
+      );
       return NextResponse.json(offering, { status: 201 });
     } catch (err: any) {
       if (err.code === 11000) {
@@ -148,6 +158,15 @@ export async function PATCH(request: Request) {
     if (!offering) {
       return NextResponse.json({ error: "Offering not found" }, { status: 404 });
     }
+    await logActivity(
+      {
+        action: "offering.edit",
+        summary: `Edited ${offering.serviceType} offering to ₦${total.toLocaleString()}`,
+        targetType: "Offering",
+        targetId: offering._id,
+      },
+      request
+    );
     return NextResponse.json(offering);
   } catch (error: any) {
     console.error("API error:", error);
@@ -173,6 +192,15 @@ export async function DELETE(request: Request) {
     if (!deleted) {
       return NextResponse.json({ error: "Offering not found" }, { status: 404 });
     }
+    await logActivity(
+      {
+        action: "offering.delete",
+        summary: `Deleted ${deleted.serviceType} offering of ₦${(deleted.total || 0).toLocaleString()}`,
+        targetType: "Offering",
+        targetId: deleted._id,
+      },
+      request
+    );
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("API error:", error);

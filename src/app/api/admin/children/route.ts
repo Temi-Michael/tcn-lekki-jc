@@ -5,6 +5,7 @@ import AttendanceSession from "@/models/AttendanceSession";
 import AttendanceRecord from "@/models/AttendanceRecord";
 import { sendChildRegistrationEmail } from "@/lib/mail";
 import { escapeRegExp, isSameDay, nameRegex, normalizePhone } from "@/lib/matching";
+import { logActivity } from "@/lib/activity";
 
 const DUPLICATE_CHILD_MESSAGE =
   "This child is already registered. Please check the Registered Children list before adding.";
@@ -146,6 +147,16 @@ export async function POST(request: Request) {
       sendChildRegistrationEmail(parentEmail.trim(), parentName || "", `${firstName} ${lastName}`)
         .catch(err => console.error("Error sending registration email in background:", err));
     }
+
+    await logActivity(
+      {
+        action: "child.create",
+        summary: `Registered child ${firstName} ${lastName}`,
+        targetType: "Child",
+        targetId: child._id,
+      },
+      request
+    );
 
     return NextResponse.json({ child, checkedIn }, { status: 201 });
   } catch (error: any) {

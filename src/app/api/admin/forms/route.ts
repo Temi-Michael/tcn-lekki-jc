@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Form from "@/models/Form";
+import { logActivity } from "@/lib/activity";
 
 export async function GET() {
   try {
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
       status: status || "disabled",
       fields,
     });
+
+    await logActivity(
+      { action: "form.create", summary: `Created form "${title}"`, targetType: "Form", targetId: form._id },
+      request
+    );
 
     return NextResponse.json(form);
   } catch (error: any) {

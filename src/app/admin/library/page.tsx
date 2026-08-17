@@ -223,7 +223,7 @@ export default function LibraryPage() {
 
   const minDue = localKey(new Date());
   const maxDueDate = new Date();
-  maxDueDate.setMonth(maxDueDate.getMonth() + 2);
+  maxDueDate.setDate(maxDueDate.getDate() + 14); // 2-week loan period
   const maxDue = localKey(maxDueDate);
 
   // Monotonic id so out-of-order responses (fast typing, overlapping refetches)
@@ -443,7 +443,7 @@ export default function LibraryPage() {
       return;
     }
     if (!dueDate) {
-      showAlert("A due date is required (up to 2 months).", { type: "error" });
+      showAlert("A due date is required (up to 2 weeks).", { type: "error" });
       return;
     }
     submitLoan(false);
@@ -489,7 +489,7 @@ export default function LibraryPage() {
   const submitRenew = async () => {
     if (!renewTarget) return;
     if (!renewDue) {
-      showAlert("Pick a new due date (up to 2 months).", { type: "error" });
+      showAlert("Pick a new due date (up to 2 weeks).", { type: "error" });
       return;
     }
     setRenewing(true);
@@ -1161,7 +1161,7 @@ export default function LibraryPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs text-neutral-400 mb-1">Due date * (max 2 months)</label>
+              <label className="block text-xs text-neutral-400 mb-1">Due date * (max 2 weeks)</label>
               <input
                 type="date"
                 value={dueDate}
@@ -1322,7 +1322,7 @@ export default function LibraryPage() {
               New due date for <span className="text-white font-medium">{renewTarget.title}</span>
             </p>
             <div>
-              <label className="block text-xs text-neutral-400 mb-1">Due date (max 2 months)</label>
+              <label className="block text-xs text-neutral-400 mb-1">Due date (max 2 weeks)</label>
               <input
                 type="date"
                 value={renewDue}

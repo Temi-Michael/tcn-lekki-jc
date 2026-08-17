@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, Phone, Mail, Loader2, Calendar, Smile, Search, Award, X, RefreshCw, Download, FileText } from "lucide-react";
+import { Plus, UserPlus, Phone, Mail, Loader2, Calendar, Smile, Search, Award, X, RefreshCw, Download, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAlert } from "@/components/AlertProvider";
+
+const CHILDREN_PER_PAGE = 12;
 
 // Escapes values before they are interpolated into the print/PDF HTML string,
 // so a name containing markup can't inject script into the export window.
@@ -45,6 +47,7 @@ export default function ChildrenAdminPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [childPage, setChildPage] = useState(1);
 
   // Auto-calculate age from DOB
   useEffect(() => {
@@ -247,6 +250,15 @@ export default function ChildrenAdminPage() {
       (c.parentName && c.parentName.toLowerCase().includes(query))
     );
   });
+
+  const childTotalPages = Math.max(1, Math.ceil(filteredChildren.length / CHILDREN_PER_PAGE));
+  const pagedChildren = filteredChildren.slice(
+    (childPage - 1) * CHILDREN_PER_PAGE,
+    childPage * CHILDREN_PER_PAGE
+  );
+  useEffect(() => {
+    if (childPage > childTotalPages) setChildPage(childTotalPages);
+  }, [childPage, childTotalPages]);
 
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full space-y-8">
@@ -553,7 +565,10 @@ export default function ChildrenAdminPage() {
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setChildPage(1);
+                  }}
                   placeholder="Search name or parent..."
                   className="w-full bg-neutral-950 border border-neutral-850 focus:border-blue-500 text-white text-xs rounded-xl pl-9 pr-3 py-2.5 outline-none transition-all placeholder:text-neutral-600"
                 />
@@ -581,7 +596,7 @@ export default function ChildrenAdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-800/50">
-                    {filteredChildren.map((child) => (
+                    {pagedChildren.map((child) => (
                       <tr key={child._id} className="hover:bg-neutral-800/30 transition-colors">
                         <td className="px-4 py-4 font-semibold text-white flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
@@ -617,6 +632,28 @@ export default function ChildrenAdminPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {filteredChildren.length > CHILDREN_PER_PAGE && (
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button
+                  onClick={() => setChildPage((p) => Math.max(1, p - 1))}
+                  disabled={childPage <= 1}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                </button>
+                <span className="text-xs text-neutral-500">
+                  Page {childPage} of {childTotalPages} · {filteredChildren.length} children
+                </span>
+                <button
+                  onClick={() => setChildPage((p) => Math.min(childTotalPages, p + 1))}
+                  disabled={childPage >= childTotalPages}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>

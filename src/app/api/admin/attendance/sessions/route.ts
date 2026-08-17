@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
 import AttendanceSession from "@/models/AttendanceSession";
+import { logActivity } from "@/lib/activity";
 
 const slugify = (text: string) => {
   return text
@@ -121,6 +122,16 @@ export async function POST(request: Request) {
       .populate("teachersAvailable")
       .exec();
 
+    await logActivity(
+      {
+        action: "session.create",
+        summary: `Created session "${title}" (${serviceType})`,
+        targetType: "AttendanceSession",
+        targetId: newSession._id,
+      },
+      request
+    );
+
     return NextResponse.json(populatedSession, { status: 201 });
   } catch (error: any) {
     console.error("API error:", error);
@@ -169,6 +180,18 @@ export async function PATCH(request: Request) {
 
     if (!updatedSession) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    if (status) {
+      await logActivity(
+        {
+          action: status === "active" ? "session.open" : "session.close",
+          summary: `${status === "active" ? "Opened" : "Closed"} session "${updatedSession.title}"`,
+          targetType: "AttendanceSession",
+          targetId: updatedSession._id,
+        },
+        request
+      );
     }
 
     return NextResponse.json(updatedSession);

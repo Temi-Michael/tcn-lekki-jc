@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 // admin may open this page to create another.
 export default async function SetupPage() {
   await dbConnect();
-  const adminCount = await Admin.countDocuments();
+  const adminCount = await Admin.countDocuments({ role: "super_admin" });
   const token = (await cookies()).get("admin_session")?.value;
   const session = token ? await verifySession(token) : null;
 

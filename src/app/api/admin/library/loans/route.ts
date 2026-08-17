@@ -4,18 +4,20 @@ import dbConnect from "@/lib/db";
 import Book from "@/models/Book";
 import BookLoan from "@/models/BookLoan";
 import { nameRegex } from "@/lib/matching";
+import { logActivity } from "@/lib/activity";
 
 const LOAN_UNAVAILABLE_MESSAGE = "This copy is already on loan.";
 const BORROWER_LIMIT_MESSAGE = "This borrower already has a book on loan.";
-const MAX_LOAN_MONTHS = 2;
+const MAX_LOAN_DAYS = 14; // a book may be lent for up to 2 weeks
+const MENTOR_MAX_BOOKS = 2; // registered mentors may hold 2 books at once; everyone else 1
 
 const dayKey = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
 // dueDate is stored as UTC midnight of the due day; "start of today" is the
 // boundary for overdue so a loan due today is not overdue until tomorrow.
 const startOfTodayUTC = () => new Date(`${dayKey(new Date())}T00:00:00.000Z`);
 
-// Validates the required due date: no earlier than today, no later than two
-// months out. Returns an error string, or null when valid.
+// Validates the required due date: no earlier than today, no later than the loan
+// period out. Returns an error string, or null when valid.
 const validateDueDate = (dueDate: any): string | null => {
   if (!dueDate) return "A due date is required.";
   const due = new Date(dueDate);
@@ -24,11 +26,11 @@ const validateDueDate = (dueDate: any): string | null => {
   const dueK = dayKey(due);
   const todayK = dayKey(new Date());
   const max = new Date();
-  max.setMonth(max.getMonth() + MAX_LOAN_MONTHS);
+  max.setDate(max.getDate() + MAX_LOAN_DAYS);
   const maxK = dayKey(max);
 
   if (dueK < todayK) return "The due date cannot be in the past.";
-  if (dueK > maxK) return `A book cannot be lent for more than ${MAX_LOAN_MONTHS} months.`;
+  if (dueK > maxK) return `A book cannot be lent for more than ${MAX_LOAN_DAYS} days.`;
   return null;
 };
 
@@ -104,17 +106,23 @@ export async function POST(request: Request) {
       borrowerTeacherId = borrowerId;
     }
 
-    // One book on loan per borrower at a time. For a linked child/mentor this is a
-    // reliable id match, so it is hard-blocked. For a free-text name we can only
-    // match the string, so we surface a confirmable warning the librarian can
+    // Borrowing limits: a registered mentor may hold up to MENTOR_MAX_BOOKS at
+    // once; a registered child (and any free-text borrower) may hold 1. A linked
+    // child is hard-blocked at 1 (also backed by a unique index). A free-text name
+    // can only be string-matched, so it is a confirmable warning the librarian can
     // override for a genuinely different person with the same name.
-    if (borrowerChildId || borrowerTeacherId) {
-      const existing = await BookLoan.findOne({
-        status: "borrowed",
-        ...(borrowerChildId ? { borrowerChildId } : { borrowerTeacherId }),
-      });
+    if (borrowerChildId) {
+      const existing = await BookLoan.findOne({ status: "borrowed", borrowerChildId });
       if (existing) {
         return NextResponse.json({ error: BORROWER_LIMIT_MESSAGE }, { status: 409 });
+      }
+    } else if (borrowerTeacherId) {
+      const held = await BookLoan.countDocuments({ status: "borrowed", borrowerTeacherId });
+      if (held >= MENTOR_MAX_BOOKS) {
+        return NextResponse.json(
+          { error: `A mentor can borrow up to ${MENTOR_MAX_BOOKS} books at a time.` },
+          { status: 409 }
+        );
       }
     } else if (!confirmDuplicate) {
       const existing = await BookLoan.findOne({
@@ -174,6 +182,15 @@ export async function POST(request: Request) {
     await book.save();
 
     const populated = await BookLoan.findById(loan._id).populate("bookId", "title author isbn");
+    await logActivity(
+      {
+        action: "loan.lend",
+        summary: `Lent "${book.title}" to ${borrowerName.trim()}`,
+        targetType: "BookLoan",
+        targetId: loan._id,
+      },
+      request
+    );
     return NextResponse.json(populated, { status: 201 });
   } catch (error: any) {
     console.error("API error:", error);
@@ -210,6 +227,15 @@ export async function PATCH(request: Request) {
       loan.dueDate = new Date(dueDate);
       await loan.save();
       const populated = await BookLoan.findById(loan._id).populate("bookId", "title author isbn");
+      await logActivity(
+        {
+          action: "loan.renew",
+          summary: `Renewed "${(populated as any)?.bookId?.title || "a book"}" for ${loan.borrowerName}`,
+          targetType: "BookLoan",
+          targetId: loan._id,
+        },
+        request
+      );
       return NextResponse.json(populated);
     }
 
@@ -227,6 +253,15 @@ export async function PATCH(request: Request) {
     await Book.updateOne({ _id: loan.bookId, status: "borrowed" }, { $set: bookUpdate });
 
     const populated = await BookLoan.findById(loan._id).populate("bookId", "title author isbn");
+    await logActivity(
+      {
+        action: "loan.return",
+        summary: `Returned "${(populated as any)?.bookId?.title || "a book"}" from ${loan.borrowerName}`,
+        targetType: "BookLoan",
+        targetId: loan._id,
+      },
+      request
+    );
     return NextResponse.json(populated);
   } catch (error: any) {
     console.error("API error:", error);
