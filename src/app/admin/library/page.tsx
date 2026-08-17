@@ -54,6 +54,7 @@ type CopyActionKind = "lost" | "retired" | "available" | "delete";
 const CONDITIONS = ["New", "Good", "Fair", "Worn"];
 const EMPTY_PERSON: Person = { kind: null, id: null, name: "" };
 const PER_PAGE = 8; // book titles shown per inventory page
+const LOANS_PER_PAGE = 8; // loan rows shown per page
 
 const COPY_ACTION_TEXT: Record<CopyActionKind, { title: string; message: string; confirm: string; danger?: boolean }> = {
   lost: {
@@ -220,6 +221,8 @@ export default function LibraryPage() {
 
   // Loans panel
   const [loanFilter, setLoanFilter] = useState<"borrowed" | "overdue" | "returned">("borrowed");
+  const [loanSearch, setLoanSearch] = useState("");
+  const [loanPage, setLoanPage] = useState(1);
 
   const minDue = localKey(new Date());
   const maxDueDate = new Date();
@@ -579,7 +582,13 @@ export default function LibraryPage() {
 
   const switchLoanFilter = async (f: "borrowed" | "overdue" | "returned") => {
     setLoanFilter(f);
+    setLoanPage(1);
     if (f === "returned" && returnedLoans === null) await loadReturned();
+  };
+
+  const onLoanSearch = (value: string) => {
+    setLoanSearch(value);
+    setLoanPage(1);
   };
 
   // Summary
@@ -602,6 +611,25 @@ export default function LibraryPage() {
       : loanFilter === "overdue"
       ? borrowedLoans.filter(isOverdue)
       : returnedLoans || [];
+
+  // Search across borrower, book title, and author (plain case-insensitive
+  // substring — data is already in state, so no request per keystroke).
+  const loanQuery = loanSearch.trim().toLowerCase();
+  const filteredLoans = loanQuery
+    ? shownLoans.filter(
+        (l: any) =>
+          (l.borrowerName || "").toLowerCase().includes(loanQuery) ||
+          (l.bookId?.title || "").toLowerCase().includes(loanQuery) ||
+          (l.bookId?.author || "").toLowerCase().includes(loanQuery)
+      )
+    : shownLoans;
+
+  const loanTotalPages = Math.max(1, Math.ceil(filteredLoans.length / LOANS_PER_PAGE));
+  const pagedLoans = filteredLoans.slice((loanPage - 1) * LOANS_PER_PAGE, loanPage * LOANS_PER_PAGE);
+  // Keep the page in range when the list shrinks (a return, a narrower search).
+  useEffect(() => {
+    if (loanPage > loanTotalPages) setLoanPage(loanTotalPages);
+  }, [loanPage, loanTotalPages]);
 
   if (loading) {
     return (
@@ -1008,28 +1036,41 @@ export default function LibraryPage() {
 
       {/* Loans */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <BookMarked className="w-5 h-5 text-blue-500" /> Loans
-          </h2>
-          <div className="flex items-center gap-1 bg-neutral-950 border border-neutral-800 rounded-xl p-1">
-            {(["borrowed", "overdue", "returned"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => switchLoanFilter(f)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer capitalize ${
-                  loanFilter === f ? "bg-blue-600 text-white" : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+        <div className="flex flex-col gap-3 mb-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <BookMarked className="w-5 h-5 text-blue-500" /> Loans
+            </h2>
+            <div className="flex items-center gap-1 bg-neutral-950 border border-neutral-800 rounded-xl p-1">
+              {(["borrowed", "overdue", "returned"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => switchLoanFilter(f)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer capitalize ${
+                    loanFilter === f ? "bg-blue-600 text-white" : "text-neutral-400 hover:text-white"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={loanSearch}
+              onChange={(e) => onLoanSearch(e.target.value)}
+              placeholder="Search borrower, title, author"
+              className="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 text-white text-sm rounded-xl pl-9 pr-3 py-2 outline-none transition-all"
+            />
           </div>
         </div>
 
-        {shownLoans.length === 0 ? (
+        {filteredLoans.length === 0 ? (
           <div className="text-center py-10 text-neutral-500 text-sm">
-            {loanFilter === "returned"
+            {loanQuery
+              ? "No loans match your search."
+              : loanFilter === "returned"
               ? "No returned loans yet."
               : loanFilter === "overdue"
               ? "Nothing overdue — all lent books are within their due date."
@@ -1037,7 +1078,7 @@ export default function LibraryPage() {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {shownLoans.map((l) => {
+            {pagedLoans.map((l) => {
               const overdue = isOverdue(l);
               const contact = [l.borrowerPhone, l.borrowerEmail].filter(Boolean).join(" · ");
               return (
@@ -1100,6 +1141,29 @@ export default function LibraryPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Loans pagination */}
+        {filteredLoans.length > LOANS_PER_PAGE && (
+          <div className="flex items-center justify-between gap-3 pt-4">
+            <button
+              onClick={() => setLoanPage((p) => Math.max(1, p - 1))}
+              disabled={loanPage <= 1}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Prev
+            </button>
+            <span className="text-xs text-neutral-500">
+              Page {loanPage} of {loanTotalPages} · {filteredLoans.length} loans
+            </span>
+            <button
+              onClick={() => setLoanPage((p) => Math.min(loanTotalPages, p + 1))}
+              disabled={loanPage >= loanTotalPages}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-300 hover:text-white text-xs font-semibold rounded-lg border border-neutral-800 transition-all cursor-pointer"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
       </div>

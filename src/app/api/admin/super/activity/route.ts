@@ -4,7 +4,7 @@ import ActivityLog from "@/models/ActivityLog";
 import { getCurrentUser } from "@/lib/auth";
 import { escapeRegExp } from "@/lib/matching";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 
 // Lives under /api/admin/super (middleware restricts to super_admin); re-checked
 // here as defense-in-depth.
